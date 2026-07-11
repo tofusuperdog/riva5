@@ -1,0 +1,90 @@
+// === Custom Breakpoints to match Tailwind ===
+$breakpoint-xs: 0 !default;
+$breakpoint-sm: 640px !default;
+$breakpoint-md: 768px !default;
+$breakpoint-lg: 1024px !default;
+$breakpoint-xl: 1280px !default;
+
+// === Quasar Core Styles (must be imported after breakpoints) ===
+@import "quasar/src/css/index.sass";
+// app global css in SCSS form
+.brx {
+  border: 1px solid red;
+}
+.fwhite {
+  color: #f2f2f2;
+}
+.fwhitesub {
+  color: #919191;
+}
+.fsub {
+  color: #666666;
+}
+.fblack {
+  color: #222222;
+}
+.body {
+  background-color: #643737;
+  color: #757575;
+}
+
+.backwardC {
+  color: #56a13f;
+}
+.forwardC {
+  color: #4baeed;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+.brx {
+  border: 1px solid red;
+}
+
+.font-12 {
+  font-size: 12px;
+}
+.font-18 {
+  font-size: 18px;
+}
+.font-24 {
+  font-size: 24px;
+}
+.font-14 {
+  font-size: 14px;
+}
+.font-16 {
+  font-size: 16px;
+}
+.font-36 {
+  font-size: 36px;
+}
+.font-20 {
+  font-size: 20px;
+}
+.font-30 {
+  font-size: 20px;
+}
+
+.tabBox {
+  width: 270px;
+  height: 65px;
+  border: 1px solid #757575;
+  font-size: 18px;
+  text-align: center;
+  padding-top: 2px;
+}
+.selectedTab {
+  color: #2d9687;
+  font-weight: bold;
+  border-bottom: 7px solid #2d9687;
+}
+.mainResult {
+  height: 500px;
+  border: 1px solid #757575;
+  widows: 100%;
+  margin-top: -1px;
+}
