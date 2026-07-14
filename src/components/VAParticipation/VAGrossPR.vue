@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Gross and value added trade balance
+      {{ t("participation.grossAndValueTradeBalance") }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
 
@@ -21,10 +21,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("participation.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -42,7 +42,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t("participation.viewLess") : t("participation.viewMore") }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -50,11 +50,11 @@
 
       <!-- รายละเอียด -->
       <div class="p-4 pt-4 w-full lg:w-[40%]" v-show="showDetail">
-        <div class="font-semibold text-[#1E88E5]">Gross Trade Balance</div>
+        <div class="font-semibold text-[#1E88E5]">{{ t("participation.grossTradeBalance") }}</div>
         <div class="fsub">{{ desGTB }}</div>
 
         <div class="pt-4 font-semibold text-[#2E7D6E]">
-          Value Added Trade Balance
+          {{ t("participation.valueAddedTradeBalance") }}
         </div>
         <div class="fsub">{{ desVATB }}</div>
       </div>
@@ -67,10 +67,12 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
 
 /* ----------------------------- Setup ----------------------------- */
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { t } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 const showDetail = ref($q.screen.gt.sm);
@@ -134,11 +136,11 @@ function formatGrossBalanceText(year, value, reporter, partner) {
 
   // NOTE: โครงประโยคเดิมของคุณใช้ "partner" เป็น subject
   if (value < 0) {
-    return `In ${year}, ${partner}'s gross imports from ${reporter} exceeded its exports to ${reporter} by ${absVal}% of the bilateral gross trade.`;
+    return t("participation.grossImportsExceeded", { year, partner, reporter, share: absVal });
   } else if (value > 0) {
-    return `In ${year}, ${partner}'s gross exports to ${reporter} exceeded its imports by ${absVal}% of the bilateral gross trade.`;
+    return t("participation.grossExportsExceeded", { year, partner, reporter, share: absVal });
   } else {
-    return `In ${year}, ${partner}'s gross exports to ${reporter} were equal to its imports from this country.`;
+    return t("participation.grossEqual", { year, partner, reporter });
   }
 }
 
@@ -148,11 +150,11 @@ function formatValueAddedBalanceText(year, value, reporter, partner) {
   // NOTE: แก้ข้อความเดิมที่ hardcode "Australia" -> ใช้ reporter/partner ให้ถูก
   // และรักษา pattern คล้ายเดิมที่สุด
   if (value > 0) {
-    return `In ${year}, ${partner}'s value added produced to its exports to ${reporter} was ${absVal}% higher than ${partner}'s value added it imported.`;
+    return t("participation.vaHigher", { year, partner, reporter, share: absVal });
   } else if (value < 0) {
-    return `In ${year}, ${partner}'s value added produced to its exports to ${reporter} was ${absVal}% lower than ${partner}'s value added it imported.`;
+    return t("participation.vaLower", { year, partner, reporter, share: absVal });
   } else {
-    return `In ${year}, ${partner}'s imported value added from ${reporter} equaled its exported value added to ${reporter}.`;
+    return t("participation.vaEqual", { year, partner, reporter });
   }
 }
 
@@ -246,13 +248,11 @@ async function drawOrUpdateChart() {
   const vaSeries = dataGraph.value.map((d) => d.va_balance);
   const grossSeries = dataGraph.value.map((d) => d.gross_balance);
 
-  const title = `How did ${
-    exporting.value.name
-  }'s gross and value-added trade balance with ${
-    importing.value.name
-  } across ${String(
-    sector.value?.sectorShortName ?? "",
-  ).toLowerCase()} changed over the years?`;
+  const title = t("participation.balanceTrendTitle", {
+    exporting: exporting.value.name,
+    importing: importing.value.name,
+    sector: String(sector.value?.sectorShortName ?? "").toLowerCase(),
+  });
 
   const options = {
     chart: { type: "spline", backgroundColor: "#fff" },
@@ -264,7 +264,7 @@ async function drawOrUpdateChart() {
     },
     xAxis: { categories: cats, tickLength: 0, lineColor: "#e5e5e5" },
     yAxis: {
-      title: { text: "Percent of bilateral gross trade" },
+      title: { text: t("participation.percentBilateral") },
 
       gridLineColor: "#eee",
       labels: {
@@ -288,10 +288,10 @@ async function drawOrUpdateChart() {
         return `
           <div>
             <div style="font-weight:700">${this.series.name}</div>
-            <div>Year:&nbsp;${this.category ?? this.x}</div>
-            <div>Share:&nbsp; ${Number(this.y).toFixed(
+            <div>${t("participation.year")}:&nbsp;${this.category ?? this.x}</div>
+            <div>${t("participation.share")}:&nbsp; ${Number(this.y).toFixed(
               1,
-            )}% of bilateral gross trade</div>
+            )}% ${t("participation.ofBilateral")}</div>
           </div>`;
       },
     },
@@ -304,8 +304,8 @@ async function drawOrUpdateChart() {
     },
     credits: { enabled: false },
     series: [
-      { name: "Value Added Trade Balance", data: vaSeries, color: "#2E7D6E" },
-      { name: "Gross Trade Balance", data: grossSeries, color: "#1E88E5" },
+      { name: t("participation.valueAddedTradeBalance"), data: vaSeries, color: "#2E7D6E" },
+      { name: t("participation.grossTradeBalance"), data: grossSeries, color: "#1E88E5" },
     ],
   };
 

@@ -3,12 +3,10 @@
     class="max-w-[1200px] w-[95%] mx-auto relative z-100 border-1 bg-white border-[#DDDDDD] rounded-md mt-2 md:mt-4 pb-2 md:pb-4"
   >
     <!-- หัวข้อ -->
-    <div class="p-2 text-left pl-4 text-lg text-bold fblack">GVC overview</div>
+    <div class="p-2 text-left pl-4 text-lg text-bold fblack">{{ t('gvc.overview') }}</div>
     <div class="h-1 border-b-1 border-b-[#DDDDDD]"></div>
     <div class="px-2 pt-3 text-lg font-semibold text-center">
-      {{ countryName }}'s Gross Exports: Backward vs Forward Linkages ({{
-        year
-      }})
+      {{ t('gvc.overviewTitle', { economy: countryName, year }) }}
     </div>
     <div class="flex flex-col lg:flex-row pt-4 justify-center">
       <!-- backward -->
@@ -22,7 +20,7 @@
         </div>
         <div class="flex justify-center pt-2 pb-1 items-center">
           <div><img src="/images/vaBackwardG.svg" alt="" /></div>
-          <div class="backwardC pl-1 text-lg pt-1">Backward Linkages</div>
+          <div class="backwardC pl-1 text-lg pt-1">{{ t('gvc.backward') }}</div>
         </div>
         <div class="px-2 text-center max-w-[400px] mx-auto fsub">
           {{ backwardText }}
@@ -73,7 +71,7 @@
         </div>
         <div class="flex justify-center pt-2 pb-1 items-center">
           <div><img src="/images/vaForwardG.svg" alt="" /></div>
-          <div class="forwardC pl-1 text-lg pt-1">Forward Linkages</div>
+          <div class="forwardC pl-1 text-lg pt-1">{{ t('gvc.forward') }}</div>
         </div>
         <div class="px-2 text-center max-w-[400px] mx-auto fsub">
           {{ forwardText }}
@@ -87,12 +85,17 @@
 import { ref, watch, computed } from "vue";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { t, locale } = useI18n({ useScope: "global" });
 
 // ทำให้ reactive กับการเปลี่ยน props เสมอ
-const countryName = computed(() => props.inputData?.exporting?.name ?? "");
+const countryName = computed(() => translateEconomy(
+  props.inputData?.exporting ?? {}, locale.value
+));
 const year = computed(() => Number(props.inputData?.year) || null);
 
 const backwardText = ref("");
@@ -124,8 +127,8 @@ async function loadAndRender() {
     const valM = Number(back.value);
     BValue = valM;
     const valT =
-      valM > 1000 ? `${B(valM)} billion` : `${valM.toFixed(1)} million`;
-    backwardText.value = `Backward linkages refer to the use of foreign Value added (FVA) - value added produced abroad - in  ${countryName.value}'s exports. In ${year.value}, FVA accounted for ${share}% of ${countryName.value}'s gross exports, valued at USD ${valT}.`;
+      valM > 1000 ? `${B(valM)} ${t('gvc.billion')}` : `${valM.toFixed(1)} ${t('gvc.million')}`;
+    backwardText.value = t('gvc.backwardDefinition', { economy: countryName.value, year: year.value, share, value: valT });
   } else {
     backwardText.value = "";
   }
@@ -137,8 +140,8 @@ async function loadAndRender() {
     const valM = Number(fwd.value);
     FValue = valM;
     const valT =
-      valM > 1000 ? `${B(valM)} billion` : `${valM.toFixed(1)} million`;
-    forwardText.value = `Forward linkages represent ${countryName.value}'s Domestic Value Added (DVA) that is subsequently embedded in the gross exports of partner economies. In ${year.value}, forward linkages made up ${share}% of ${countryName.value}'s gross exports, equivalent to USD ${valT}.`;
+      valM > 1000 ? `${B(valM)} ${t('gvc.billion')}` : `${valM.toFixed(1)} ${t('gvc.million')}`;
+    forwardText.value = t('gvc.forwardDefinition', { economy: countryName.value, year: year.value, share, value: valT });
   } else {
     forwardText.value = "";
   }

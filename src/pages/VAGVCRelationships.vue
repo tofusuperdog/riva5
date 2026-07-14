@@ -1,20 +1,20 @@
 <template>
   <div class="flex flex-col min-h-screen bg-[#f7f7f7]">
     <main class="flex-1">
-      <VAHeader :menu="pageName" class="fixed top-0 left-0 w-full" />
+      <HeaderMain class="gvc-top-menu" />
       <VATitle
         :menu="pageName"
-        class="mt-15"
         :isShare="isShareOpen"
         :ShareText="inputDataFinal"
       />
       <GVCContentMain
+        :key="locale"
         class="mt-15"
         @updateInputData="InputData"
         @isShowGraph="checkShowGraph"
       />
       <GVCKey class="" />
-      <div v-if="isShowGraph" class="">
+      <div v-if="isShowGraph" :key="locale" class="">
         <GBVCAcrossYears
           v-if="isShowGraph && inputDataFinal"
           :inputData="inputDataFinal"
@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import VAHeader from "../components/VAHeader.vue";
+import HeaderMain from "../components/Header.vue";
 import VATitle from "../components/VATitle.vue";
 import GVCContentMain from "../components/VAGVCRelationships/GVCContentRangeMain.vue";
 import GVCKey from "../components/VAGVCRelationships/GVCKey.vue";
@@ -84,6 +84,9 @@ import GVCTop5PartnerFor from "../components/VAGVCRelationships/GVCTop5PartnerFo
 
 import FooterMain from "../components/Footer.vue";
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { locale } = useI18n({ useScope: "global" });
 
 const pageName = ref("gvcoverview");
 const inputDataFinal = ref(null);
@@ -115,4 +118,10 @@ const checkShowGraph = (value) => {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.gvc-top-menu {
+  position: sticky !important;
+  top: 0;
+  z-index: 99999 !important;
+}
+</style>

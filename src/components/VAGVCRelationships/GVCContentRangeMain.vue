@@ -17,21 +17,21 @@
         >
           <div class="lg:w-[350px] md:w-[300px]">
             <EcoSelect
-              label="Exporting economy"
+              :label="t('gvc.exportingEconomy')"
               @update:selected="onUpdateExportISO"
               :initialValue="exportingISOInit"
             />
           </div>
           <div class="md:w-[150px]">
             <yearSelect
-              label="Period start"
+              :label="t('gvc.periodStart')"
               @update="onUpdateYearStart"
               :initialValue="yearStartInit"
             />
           </div>
           <div class="md:w-[150px]">
             <yearSelect
-              label="Period end"
+              :label="t('gvc.periodEnd')"
               @update="onUpdateYearEnd"
               :initialValue="yearEndInit"
             />
@@ -43,20 +43,19 @@
             v-show="isInputApply"
             @click="onClickApply"
           >
-            Apply
+            {{ t('gvc.apply') }}
           </div>
           <div
             class="bg-[#fdc20083] fblack h-10 px-4 rounded-sm inline-flex items-center w-full text-center justify-center md:w-[220px]"
             v-show="!isInputApply"
           >
-            Apply
+            {{ t('gvc.apply') }}
           </div>
         </div>
 
         <div class="h-6">
           <div class="text-center text-yellow-300" v-show="showInvalidYear">
-            Period end must be a year after the Period start. Please select a
-            valid range.
+            {{ t('gvc.yearRangeError') }}
           </div>
         </div>
       </div>
@@ -70,6 +69,8 @@ import { useRouter, useRoute } from "vue-router";
 import { LocalStorage, Notify, Dialog } from "quasar";
 import { serverSetup } from "../../pages/server";
 import axios from "axios";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 import EcoSelect from "../VAEconomySelect.vue";
 import yearSelect from "../VAYearSelect.vue";
@@ -77,6 +78,7 @@ import yearSelect from "../VAYearSelect.vue";
 // 🧭 Routing
 const router = useRouter();
 const route = useRoute();
+const { t, locale } = useI18n({ useScope: "global" });
 
 // 📌 Connection Database Server Info
 const { serverData } = serverSetup();
@@ -175,7 +177,7 @@ const loadEconomyList = async () => {
     const res = await axios.get(url);
     economyList.value = res.data.map((data) => ({
       id: data.id,
-      label: data.name,
+      label: translateEconomy({ iso: data.iso, name: data.name }, locale.value),
       value: data.iso,
       disable: data.disable,
     }));
@@ -217,16 +219,15 @@ const onClickApply = async () => {
   }
   if (checkYearPass === 1) {
     alert(
-      `Limited data available\n\n` +
-        `${inputData.value.exporting.name} is available only for ${yearStartAfter}–${yearEndAfter}.\n` +
-        `Please adjust Period start/end within this range and apply again.`
+      `${t('gvc.limitedData')}\n\n` +
+        `${t('gvc.availability', { economy: inputData.value.exporting.name, start: yearStartAfter, end: yearEndAfter })}\n` +
+        t('gvc.adjustPeriod')
     );
     return;
   }
 
   Notify.create({
-    message:
-      "Your changes have been applied. Scroll down to review the results.",
+    message: t('gvc.applied'),
     color: "positive",
     position: "center",
     timeout: 2000,

@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      GVC Participation across years
+      {{ t("participation.acrossYears") }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
 
@@ -21,10 +21,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("participation.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -45,7 +45,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t("participation.viewLess") : t("participation.viewMore") }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -56,63 +56,38 @@
         <!-- GVC-related -->
         <div class="mb-6">
           <div class="font-semibold text-[#56353A]">
-            GVC-related Value Added Exports
+            {{ t("participation.gvcRelated") }}
           </div>
           <div
             class="underline cursor-pointer text-[#0672CB] mb-2 inline-block"
             @click="gvcDialog = true"
           >
-            Click here to see the breakdown
+            {{ t("participation.breakdown") }}
           </div>
-          <div class="fsub">
-            In {{ latestYear }}, {{ gvcTotalPct.toFixed(1) }}% of
-            {{ exporting?.name }}'s gross exports to {{ importing?.name }} was
-            attributable to GVCs. This GVC-related share consists of:
-          </div>
+          <div class="fsub">{{ t("participation.gvcSummary", { year: latestYear, share: gvcTotalPct.toFixed(1), exporting: exporting?.name, importing: importing?.name }) }}</div>
           <ul class="list-disc ml-6 mt-1 fsub">
-            <li>
-              {{ forwardPct1.toFixed(1) }}% was {{ exporting?.name }}’s DVA
-              embedded in {{ importing?.name }}'s re-exports of intermediate
-              exports to third economies (forward linkages).
-            </li>
-            <li>
-              {{ forwardPct2.toFixed(1) }}% was {{ exporting?.name }}’s DVA
-              embedded in {{ importing?.name }}'s re-exports of intermediate
-              exports back to {{ exporting?.name }} (returned domestic value
-              added).
-            </li>
-            <li>
-              {{ fvaPct.toFixed(1) }}% reflected FVA embedded in
-              {{ exporting?.name }}’s gross exports to
-              {{ importing?.name }} (backward linkages).
-            </li>
-            <li>
-              {{ doublePct.toFixed(1) }}% were the Double-counted Value due to
-              repeated border crossings.
-            </li>
+            <li>{{ t("participation.gvcForward", { share: forwardPct1.toFixed(1), exporting: exporting?.name, importing: importing?.name }) }}</li>
+            <li>{{ t("participation.gvcReturned", { share: forwardPct2.toFixed(1), exporting: exporting?.name, importing: importing?.name }) }}</li>
+            <li>{{ t("participation.gvcFva", { share: fvaPct.toFixed(1), exporting: exporting?.name, importing: importing?.name }) }}</li>
+            <li>{{ t("participation.gvcDouble", { share: doublePct.toFixed(1) }) }}</li>
           </ul>
         </div>
 
         <!-- Direct consumption -->
         <div>
           <div class="font-semibold text-[#e052b0]">
-            Direct Consumption Value Added Exports
+            {{ t("participation.directConsumption") }}
           </div>
           <div
             class="underline cursor-pointer text-[#0672CB] mb-2 inline-block"
             @click="directDialog = true"
           >
-            Click here to see the breakdown
+            {{ t("participation.breakdown") }}
           </div>
-          <div class="fsub">
-            In {{ latestYear }}, {{ directTotalPct.toFixed(1) }}% of
-            {{ exporting?.name }}’s gross exports to
-            {{ importing?.name }} represented DVA that was consumed within the
-            export destination.
-          </div>
+          <div class="fsub">{{ t("participation.directSummary", { year: latestYear, share: directTotalPct.toFixed(1), exporting: exporting?.name, importing: importing?.name }) }}</div>
           <ul class="list-disc ml-6 mt-1 fsub">
-            <li>{{ interPct.toFixed(1) }}% was intermediate exports</li>
-            <li>{{ finalPct.toFixed(1) }}% as final exports.</li>
+            <li>{{ t("participation.intermediateExports", { share: interPct.toFixed(1) }) }}</li>
+            <li>{{ t("participation.finalExports", { share: finalPct.toFixed(1) }) }}</li>
           </ul>
         </div>
       </div>
@@ -123,7 +98,7 @@
       <q-card class="max-w-[90vw] w-full">
         <q-card-section>
           <div class="text-center text-[18px] font-semibold fblack">
-            GVC-related Value Added Exports
+            {{ t("participation.gvcRelated") }}
           </div>
           <div
             id="chartPartRange02-gvc"
@@ -131,7 +106,7 @@
           ></div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="CLOSE" color="primary" v-close-popup />
+          <q-btn flat :label="t('participation.close')" color="primary" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -145,7 +120,7 @@
       <q-card class="max-w-[90vw] w-full">
         <q-card-section>
           <div class="text-center text-[18px] font-semibold fblack">
-            Direct Consumption Value Added Exports
+            {{ t("participation.directConsumption") }}
           </div>
           <div
             id="chartPartRange02-direct"
@@ -153,7 +128,7 @@
           ></div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="CLOSE" color="primary" v-close-popup />
+          <q-btn flat :label="t('participation.close')" color="primary" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -165,10 +140,12 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
 
 /* ----------------------------- props / server ----------------------------- */
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { t } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 /* ----------------------------- UI states --------------------------------- */
@@ -202,7 +179,7 @@ const money = (n) =>
   `$${Number(n ?? 0).toLocaleString(undefined, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })} million`;
+  })} ${t("participation.million")}`;
 
 /* Tooltip (ใช้ร่วมทุกกราฟใน dialog) */
 const dialogTooltip = function () {
@@ -210,9 +187,9 @@ const dialogTooltip = function () {
   return `
     <div style="min-width:220px">
       <div style="font-weight:700">${this.series.name}</div>
-      <div>Year: ${p.year}</div>
-      <div>Share:&nbsp; ${Number(p.y ?? 0).toFixed(1)}% of gross exports</div>
-      <div>Value:&nbsp; ${money(p.value)}</div>
+      <div>${t("participation.year")}: ${p.year}</div>
+      <div>${t("participation.share")}:&nbsp; ${Number(p.y ?? 0).toFixed(1)}% ${t("participation.ofGross")}</div>
+      <div>${t("participation.value")}:&nbsp; ${money(p.value)}</div>
     </div>`;
 };
 
@@ -402,7 +379,7 @@ async function drawMain() {
       (v.forward2 || 0) +
       (v.backward || 0) +
       (v.double || 0);
-    return makePoint(y, sharePct, valueSum, "GVC-Related Value Added Exports");
+    return makePoint(y, sharePct, valueSum, t("participation.gvcRelated"));
   });
 
   const directPoints = years.value.map((y) => {
@@ -414,7 +391,7 @@ async function drawMain() {
       y,
       sharePct,
       valueSum,
-      "Direct Consumption Value Added Exports"
+      t("participation.directConsumption")
     );
   });
 
@@ -423,17 +400,13 @@ async function drawMain() {
     return `
       <div style="min-width:210px">
         <div style="font-weight:700">${p.seriesTitle || this.series.name}</div>
-        <div>Year: ${p.year}</div>
-        <div>Share: ${Number(p.y).toFixed(1)}% of gross exports</div>
-        <div>Value: ${money(p.value)}</div>
+        <div>${t("participation.year")}: ${p.year}</div>
+        <div>${t("participation.share")}: ${Number(p.y).toFixed(1)}% ${t("participation.ofGross")}</div>
+        <div>${t("participation.value")}: ${money(p.value)}</div>
       </div>`;
   };
 
-  const title = `How has the share of ${
-    exporting.value.name
-  }'s GVC related exports of ${String(
-    sector.value?.sectorShortName ?? ""
-  ).toLowerCase()} to ${importing.value.name} changed over time?`;
+  const title = t("participation.gvcTrendTitle", { exporting: exporting.value.name, sector: String(sector.value?.sectorShortName ?? "").toLowerCase(), importing: importing.value.name });
 
   if (mainChart) {
     mainChart.setTitle({ text: title });
@@ -441,7 +414,7 @@ async function drawMain() {
 
     mainChart.addSeries(
       {
-        name: "GVC-Related Value Added Exports",
+        name: t("participation.gvcRelated"),
         data: gvcPoints,
         color: "#56353A",
       },
@@ -449,7 +422,7 @@ async function drawMain() {
     );
     mainChart.addSeries(
       {
-        name: "Direct Consumption Value Added Exports",
+        name: t("participation.directConsumption"),
         data: directPoints,
         color: "#E47ABC",
       },
@@ -468,7 +441,7 @@ async function drawMain() {
       style: { fontSize: "24px", fontWeight: 600, color: "#333" },
     },
     caption: {
-      text: "Percentages may not total 100% because of rounding.",
+      text: t("participation.percentagesRounding"),
       align: "center",
       verticalAlign: "bottom",
       y: 10,
@@ -479,7 +452,7 @@ async function drawMain() {
     yAxis: {
       min: 0,
       max: 100,
-      title: { text: "Percent of gross exports" },
+      title: { text: t("participation.percentGross") },
       labels: {
         formatter() {
           return this.value + "%";
@@ -492,12 +465,12 @@ async function drawMain() {
     credits: { enabled: false },
     series: [
       {
-        name: "GVC-Related Value Added Exports",
+        name: t("participation.gvcRelated"),
         data: gvcPoints,
         color: "#56353A",
       },
       {
-        name: "Direct Consumption Value Added Exports",
+        name: t("participation.directConsumption"),
         data: directPoints,
         color: "#E47ABC",
       },
@@ -513,7 +486,7 @@ const commonDialogOptions = (cats) => ({
   yAxis: {
     min: 0,
     max: 100,
-    title: { text: "Percent of gross exports" },
+    title: { text: t("participation.percentGross") },
     labels: {
       formatter() {
         return this.value + "%";
@@ -561,7 +534,7 @@ function drawGvcDialog() {
     while (gvcChart.series.length) gvcChart.series[0].remove(false);
     gvcChart.addSeries(
       {
-        name: "DVA intermediate goods exports back to original exporter",
+        name: t("participation.dvaBack"),
         data: sF2,
         color: "#FF8A65",
       },
@@ -569,18 +542,18 @@ function drawGvcDialog() {
     );
     gvcChart.addSeries(
       {
-        name: "DVA intermediate goods exported to a third economy",
+        name: t("participation.dvaThird"),
         data: sF,
         color: "#EC407A",
       },
       false
     );
     gvcChart.addSeries(
-      { name: "Foreign Value Added (FVA)", data: sB, color: "#26A69A" },
+      { name: t("participation.fva"), data: sB, color: "#26A69A" },
       false
     );
     gvcChart.addSeries(
-      { name: "Double counted value", data: sD, color: "#8E24AA" },
+      { name: t("participation.doubleCounted"), data: sD, color: "#8E24AA" },
       false
     );
     gvcChart.xAxis[0].setCategories(cats, false);
@@ -593,17 +566,17 @@ function drawGvcDialog() {
     ...commonDialogOptions(cats),
     series: [
       {
-        name: "DVA intermediate goods exports back to original exporter",
+        name: t("participation.dvaBack"),
         data: sF2,
         color: "#FF8A65",
       },
       {
-        name: "DVA intermediate goods exported to a third economy",
+        name: t("participation.dvaThird"),
         data: sF,
         color: "#EC407A",
       },
-      { name: "Foreign Value Added (FVA)", data: sB, color: "#26A69A" },
-      { name: "Double-counted value", data: sD, color: "#8E24AA" },
+      { name: t("participation.fva"), data: sB, color: "#26A69A" },
+      { name: t("participation.doubleCounted"), data: sD, color: "#8E24AA" },
     ],
   });
 }
@@ -626,11 +599,11 @@ function drawDirectDialog() {
   if (directChart) {
     while (directChart.series.length) directChart.series[0].remove(false);
     directChart.addSeries(
-      { name: "DVA intermediate goods", data: sInter, color: "#26C6DA" },
+      { name: t("participation.dvaIntermediate"), data: sInter, color: "#26C6DA" },
       false
     );
     directChart.addSeries(
-      { name: "DVA final goods", data: sFinal, color: "#1E88E5" },
+      { name: t("participation.dvaFinal"), data: sFinal, color: "#1E88E5" },
       false
     );
     directChart.xAxis[0].setCategories(cats, false);
@@ -642,8 +615,8 @@ function drawDirectDialog() {
   directChart = Highcharts.chart("chartPartRange02-direct", {
     ...commonDialogOptions(cats),
     series: [
-      { name: "DVA intermediate goods", data: sInter, color: "#26C6DA" },
-      { name: "DVA final goods", data: sFinal, color: "#1E88E5" },
+      { name: t("participation.dvaIntermediate"), data: sInter, color: "#26C6DA" },
+      { name: t("participation.dvaFinal"), data: sFinal, color: "#1E88E5" },
     ],
   });
 }

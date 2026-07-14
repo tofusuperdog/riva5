@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Top exporting sector across periods
+      {{ t("backward.charts.topExportingPeriods") }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -20,10 +20,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("backward.charts.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range or economy selection.
+              {{ t("backward.charts.tryDifferentEconomy") }}
             </div>
           </div>
         </div>
@@ -61,13 +61,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t("backward.charts.preparing") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t("backward.charts.rendering") }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t("backward.charts.patience") }}
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t("backward.charts.viewLess") : t("backward.charts.viewMore") }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -124,6 +124,10 @@ import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateSector } from "../../i18n/sectors";
+
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -179,7 +183,7 @@ const buildYearRange = (s, e) =>
 
 const sectorIDToName = (id) => {
   let res = sectorList.value.filter((d) => Number(d.catID) == Number(id));
-  return res[0].shortname;
+  return translateSector({ catID: id, category: res[0]?.shortname || String(id) }, locale.value);
 };
 
 const shareNum = (num) => Number((Number(num) * 100).toFixed(1));
@@ -193,7 +197,7 @@ const money = (n) =>
   `$${Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })} million`;
+  })} ${t("backward.charts.million")}`;
 
 function aggregateBySector(rawData) {
   const result = {};
@@ -255,8 +259,8 @@ const toB = (m) => Number((Number(m) / 1000).toFixed(1)); // million -> billion 
 
 function formatMainValue(vMillion) {
   const v = Number(vMillion || 0);
-  if (v < 1000) return `${v.toFixed(1)} million`;
-  return `${toB(v).toFixed(1)} billion`;
+  if (v < 1000) return `${v.toFixed(1)} ${t("backward.charts.million")}`;
+  return `${toB(v).toFixed(1)} ${t("backward.charts.billion")}`;
 }
 const loadData = async () => {
   isLoading.value = true;
@@ -364,34 +368,18 @@ const loadData = async () => {
       let textLast = "";
       let diff = lasty - firsty;
       if (firsty == 0) {
-        textLast = `.`;
+        textLast = "";
       } else {
         if (diff < 0) {
-          textLast =
-            ", down by " +
-            Math.abs(diff).toFixed(1) +
-            " percentage points compared to " +
-            label1.value +
-            ".";
+          textLast = `, ${t("backward.charts.downBy", { value: Math.abs(diff).toFixed(1) })}${t("backward.charts.comparedWith", { period: label1.value })}`;
         } else if (diff > 0) {
-          textLast =
-            ", up by " +
-            Math.abs(diff).toFixed(1) +
-            " percentage points compared to " +
-            label1.value +
-            ".";
+          textLast = `, ${t("backward.charts.upBy", { value: Math.abs(diff).toFixed(1) })}${t("backward.charts.comparedWith", { period: label1.value })}`;
         } else {
-          textLast = "unchanged compared to " + label1.value + ".";
+          textLast = `, ${t("backward.charts.unchanged")}${t("backward.charts.comparedWith", { period: label1.value })}`;
         }
       }
 
-      let des = `During ${label2.value}, ${lasty}% of ${
-        source.value.name
-      }'s value-added content embedded in ${
-        exporting.value.name
-      }'s exports to ${
-        importing.value.name
-      } was exported via the ${sectorIDToName(Number(d))}${textLast}`;
+      let des = t("backward.charts.sourcePeriodDescription", { period: label2.value, share: lasty, source: source.value.name, exporting: exporting.value.name, importing: importing.value.name, sector: sectorIDToName(Number(d)), comparison: textLast });
       desData.value.push({
         sectorName: sectorIDToName(Number(d)),
         img: `/images/sector/${i + 1}/${d}.svg`,
@@ -407,12 +395,11 @@ const loadData = async () => {
 };
 
 const drawChart = () => {
-  let title = `In which exporting sectors is ${source.value.name}'s value added content most embedded in ${exporting.value.name}'s exports to ${importing.value.name}?`;
-  let subTitle = `Total backward linkages amounted to USD ${formatMainValue(
-    totalBack.value[0]
-  )} in ${label1.value} and USD ${formatMainValue(totalBack.value[1])} in ${
-    label2.value
-  }.`;
+  let title = t("backward.charts.sourceSectorTitle", { source: source.value.name, exporting: exporting.value.name, importing: importing.value.name });
+  let subTitle = t("backward.charts.totalPeriods", {
+    firstValue: formatMainValue(totalBack.value[0]), firstPeriod: label1.value,
+    secondValue: formatMainValue(totalBack.value[1]), secondPeriod: label2.value,
+  });
   let categories = [label1.value, label2.value];
   Highcharts.chart("chartBSRangeBSR02", {
     chart: { type: "column", backgroundColor: "#fff" },
@@ -427,7 +414,7 @@ const drawChart = () => {
     xAxis: { categories, tickLength: 0 },
     yAxis: {
       min: 0,
-      title: { text: "Percent of Backward Linkages" },
+      title: { text: t("backward.charts.percentBackward") },
       labels: {
         formatter() {
           return this.value + "%";
@@ -459,11 +446,11 @@ const drawChart = () => {
         return `
           <div style="min-width:220px">
             <div style="font-weight:700;">${this.series.name}</div>
-            <div>Year: ${p.year}</div>
-            <div>Share:&nbsp; ${Number(p.y).toFixed(
+              <div>${t("backward.charts.year")}: ${p.year}</div>
+              <div>${t("backward.charts.share")}:&nbsp; ${Number(p.y).toFixed(
               1
-            )}% of backward linkages</div>
-            <div>Value:&nbsp; ${money(p.value)}</div>
+              )}% ${t("backward.charts.ofBackward")}</div>
+              <div>${t("backward.charts.value")}:&nbsp; ${money(p.value)}</div>
           </div>`;
       },
     },
@@ -480,6 +467,10 @@ watch(
 
 onMounted(async () => {
   await loadSector();
+  await loadData();
+});
+
+watch(locale, async () => {
   await loadData();
 });
 </script>

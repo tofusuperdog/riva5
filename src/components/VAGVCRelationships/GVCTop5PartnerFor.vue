@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Top 5 Forward-Linked Partner economies
+      {{ t('gvc.topPartnerFor') }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div class="flex flex-col lg:flex-row">
@@ -18,7 +18,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t('gvc.viewLess') : t('gvc.viewMore') }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -42,14 +42,13 @@
             class="underline cursor-pointer mb-1 fsub"
             @click="breakDownGenData(i - 1)"
           >
-            Click here to break down
+            {{ t('gvc.breakdown') }}
           </div>
-          <div class="fsub">
-            In {{ yearShow }}, {{ countryName }}'s exports contributed USD
-            {{ formatMainValue(chartValues[i - 1]) }} to
-            {{ chartCategories[i - 1] }}'s export production, accounting for
-            {{ chartShare[i - 1] }}% of {{ countryName }}'s gross exports.
-          </div>
+          <div class="fsub">{{ t('gvc.partnerForDescription', {
+            year: yearShow, economy: countryName,
+            value: formatMainValue(chartValues[i - 1]),
+            partner: chartCategories[i - 1], share: chartShare[i - 1]
+          }) }}</div>
         </div>
       </div>
     </div>
@@ -67,7 +66,7 @@
           ></div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Close" color="primary" v-close-popup />
+          <q-btn flat :label="t('gvc.close')" color="primary" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -79,14 +78,20 @@ import { ref, onMounted, nextTick, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
+import { translateSector } from "../../i18n/sectors";
 
 // ===== props / server =====
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
 const $q = useQuasar();
+const { t, locale } = useI18n({ useScope: "global" });
 
 // ===== meta =====
-const countryName = computed(() => props.inputData?.exporting?.name ?? "");
+const countryName = computed(() => translateEconomy(
+  props.inputData?.exporting ?? {}, locale.value
+));
 const yearShow = computed(() => Number(props.inputData?.year) || null);
 const totalGrossExport = ref(0);
 
@@ -129,21 +134,21 @@ function showIconColor(id) {
 
 function formatMainValue(vMillion) {
   // ใช้หน่วยเดียวกับกราฟหลัก
-  if (useMillionsRef.value) return `${Number(vMillion).toFixed(1)} million`;
-  return `${toB(vMillion).toFixed(1)} billion`;
+  if (useMillionsRef.value) return `${Number(vMillion).toFixed(1)} ${t('gvc.million')}`;
+  return `${toB(vMillion).toFixed(1)} ${t('gvc.billion')}`;
 }
 
 // ===== load lists =====
 async function loadSectorList() {
   const res = await axios.get(`${serverData.value}/va/get_sector.php`);
-  sectorList.value = res.data;
+  sectorList.value = (res.data || []).map((d) => ({ ...d, shortname: translateSector({ catID: d.catID, category: d.shortname || d.category }, locale.value) }));
 }
 
 async function loadEconomyList() {
   const res = await axios.get(`${serverData.value}/va/get_economy.php`);
   economyList.value = res.data.map((d) => ({
     id: d.id,
-    label: d.name,
+    label: translateEconomy({ iso: d.iso, name: d.name }, locale.value),
     value: d.iso,
   }));
 }
@@ -172,11 +177,7 @@ function breakDownGenData(idx) {
   // เก็บเป็น million แล้วค่อยตัดสินใจหน่วยตอนวาด
   breakDownDataFinal.value = {
     title: sec.ecoName,
-    subTitle: `Domestic Value Added (DVA) from ${
-      countryName.value
-    } embedded in ${sec.ecoName} exports: USD $${formatMainValue(sec.value)} (${
-      sec.share
-    }% of ${countryName.value}'s gross exports), by sector `,
+    subTitle: t('gvc.topPartnerFor'),
     share: arr.map((x) => Number(x.value)), // million
     sectorName: arr.map((x) => findSectorName(x.exp_sector)),
   };
@@ -238,13 +239,13 @@ function plotMainChart() {
   Highcharts.chart("chartGVCSinglePartnerFor", {
     chart: { type: "column", backgroundColor: "#fff" },
     title: {
-      text: `Top 5 Partner Economies Embedding Highest Domestic Value Added (DVA) from  ${countryName.value} into Their Exports`,
+      text: t('gvc.topPartnerFor'),
       style: { fontWeight: "bold", fontSize: "24px", color: "#666" },
       align: "center",
       x: -30,
     },
     subtitle: {
-      text: `Total gross exports of ${countryName.value} in ${yearShow.value} : USD ${totalGrossExport.value}`,
+      text: t('gvc.totalGrossSubtitle', { economy: countryName.value, year: yearShow.value, value: totalGrossExport.value }),
       style: { fontSize: "14px", color: "#666" },
       align: "center",
     },
@@ -255,7 +256,7 @@ function plotMainChart() {
     yAxis: {
       min: 0,
       title: {
-        text: useMillionsRef.value ? "USD Million" : "USD Billion",
+        text: useMillionsRef.value ? t('gvc.usdMillion') : t('gvc.usdBillion'),
         style: { color: "#666" },
       },
       labels: { style: { color: "#666" } },
@@ -268,12 +269,12 @@ function plotMainChart() {
         const i = this.point.index;
         const sector = this.key;
         const share = Number(chartShare.value[i]).toFixed(1);
-        const unit = useMillionsRef.value ? "million" : "billion";
+        const unit = useMillionsRef.value ? t('gvc.million') : t('gvc.billion');
         const val = Number(this.y).toFixed(1);
         return `
           <div style="font-weight:700; margin-bottom:4px;">${sector}</div>
-          <div>Share:&nbsp; ${share}% of ${countryName.value} gross exports</div>
-          <div style="margin-top:6px;">Value:&nbsp; $${val} ${unit}</div>
+          <div>${t('gvc.share')}:&nbsp; ${share}% ${t('gvc.ofGross')}</div>
+          <div style="margin-top:6px;">${t('gvc.value')}:&nbsp; $${val} ${unit}</div>
         `;
       },
     },
@@ -306,7 +307,7 @@ function plotBreakdownChart() {
     },
     yAxis: {
       title: {
-        text: `Foreign value-added (USD ${useMillion ? "Million" : "Billion"})`,
+        text: t('gvc.foreignValueAxis', { unit: useMillion ? t('gvc.usdMillion') : t('gvc.usdBillion') }),
       },
       min: 0,
     },
@@ -318,8 +319,8 @@ function plotBreakdownChart() {
           minimumFractionDigits: 1,
           maximumFractionDigits: 1,
         });
-        const unit = useMillion ? "million" : "billion";
-        return `<b>${breakDownDataFinal.value.sectorName[i]}</b><br/>Value: $${val} ${unit}`;
+        const unit = useMillion ? t('gvc.million') : t('gvc.billion');
+        return `<b>${breakDownDataFinal.value.sectorName[i]}</b><br/>${t('gvc.value')}: $${val} ${unit}`;
       },
     },
     series: [

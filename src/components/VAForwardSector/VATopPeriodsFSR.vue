@@ -3,7 +3,7 @@
     class="max-w-[1200px] w-[95%] mx-auto bg-white border border-[#DDDDDD] rounded-md mt-4"
   >
     <!-- หัวข้อ -->
-    <div class="p-2 text-lg font-bold fblack">Top economies across periods</div>
+    <div class="p-2 text-lg font-bold fblack">{{ t('forward.topEconomiesPeriods') }}</div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
       v-if="isLoading"
@@ -37,13 +37,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t('forward.preparing') }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t('forward.rendering') }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t('forward.patience') }}
             </div>
           </div>
         </div>
@@ -63,7 +63,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t('forward.viewLess') : t('forward.viewMore') }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -93,6 +93,8 @@ import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from 'vue-i18n';
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -172,8 +174,8 @@ const moneyShort = (n) => {
   if (n == null || isNaN(n)) return "-";
   const abs = Math.abs(n);
 
-  if (abs >= 1000) return `$${(n / 1000).toFixed(1)} billion`;
-  return `$${n.toFixed(1)} million`;
+  if (abs >= 1000) return `$${(n / 1000).toFixed(1)} ${t('forward.billion')}`;
+  return `$${n.toFixed(1)} ${t('forward.million')}`;
 };
 
 const round1 = (n) => Number(Number(n).toFixed(1));
@@ -320,7 +322,7 @@ const loadData = async () => {
     });
     if (i == 4) {
       seriesMain.value.push({
-        name: "Others",
+        name: t('backward.charts.others'),
         data: [
           {
             y: round1(100 - sumShare1),
@@ -357,26 +359,24 @@ const genDes = (top5) => {
     let lasty = seriesMain.value[i].data[seriesMain.value[i].data.length - 1].y;
     let firsty = seriesMain.value[i].data[0].y;
     let diff = lasty - firsty;
-    let textdiff = "unchanged";
+    let textdiff = t('backward.charts.unchanged');
     if (diff < 0) {
-      textdiff = "down by " + Math.abs(diff).toFixed(1) + "%";
+      textdiff = t('backward.charts.downBy', { value: Math.abs(diff).toFixed(1) });
     } else if (diff > 0) {
-      textdiff = "up by " + Math.abs(diff).toFixed(1) + "%";
+      textdiff = t('backward.charts.upBy', { value: Math.abs(diff).toFixed(1) });
     }
 
     desData.value.push({
       econname: seriesMain.value[i].name,
       color: colorList[i],
       img: `/images/flags/${top5[i]}.png`,
-      des: `During ${categories.value[0].label2}, ${lasty}% of ${exporting.value.name}'s forward linkages in exports of ${sector.value.sectorShortName} went to ${seriesMain.value[i].name}, ${textdiff} percentage points compared to the ${categories.value[0].label1} period.`,
+      des: t('forward.destinationPeriodDescription', { current: categories.value[0].label2, share: lasty, exporting: exporting.value.name, sector: sector.value.sectorShortName, destination: seriesMain.value[i].name, change: textdiff, previous: categories.value[0].label1 }),
     });
   }
 };
 
 const plotGraph = () => {
-  let title = `How has the destination of ${
-    exporting.value.name
-  }'s ${sector.value.sectorShortName.toLowerCase()} forward linkages shifted overtime?`;
+  let title = t('forward.destinationShiftTitle', { exporting: exporting.value.name, sector: sector.value.sectorShortName.toLowerCase() });
   let categoriesData = [categories.value[0].label1, categories.value[0].label2];
   let series = seriesMain.value;
 
@@ -390,7 +390,7 @@ const plotGraph = () => {
     },
     yAxis: {
       title: {
-        text: "Percent of Forward Linkages",
+        text: t('forward.percentForward'),
       },
       labels: {
         format: "{value}%",
@@ -408,9 +408,9 @@ const plotGraph = () => {
 
       formatter() {
         return `<div style="font-weight:700">${this.series.name}</div>
-        <div>Year: ${this.key}</div>
-        <div>Share: ${this.y.toFixed(1)}% of forward linkages</div>
-        <div>Value: ${moneyShort(this.point.value)}</div>
+        <div>${t('forward.year')}: ${this.key}</div>
+        <div>${t('forward.share')}: ${this.y.toFixed(1)}% ${t('forward.ofForward')}</div>
+        <div>${t('forward.value')}: ${moneyShort(this.point.value)}</div>
         `;
       },
     },
@@ -430,6 +430,7 @@ onMounted(async () => {
   await loadEconomyList();
   await loadData();
 });
+watch(locale, () => loadData());
 </script>
 
 <style lang="scss" scoped></style>

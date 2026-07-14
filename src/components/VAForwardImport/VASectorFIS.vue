@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Forward linkages by exporting sector
+      {{ t('forward.bySector') }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -39,13 +39,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t('forward.preparing') }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t('forward.rendering') }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t('forward.patience') }}
             </div>
           </div>
         </div>
@@ -79,6 +79,9 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from 'vue-i18n';
+import { translateSector, translateSectorGroup } from "../../i18n/sectors";
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -149,8 +152,8 @@ const moneyShort = (n) => {
   if (n == null || isNaN(n)) return "-";
   const abs = Math.abs(n);
 
-  if (abs >= 1000) return `$${(n / 1000).toFixed(1)} billion`;
-  return `$${n.toFixed(1)} million`;
+  if (abs >= 1000) return `$${(n / 1000).toFixed(1)} ${t('forward.billion')}`;
+  return `$${n.toFixed(1)} ${t('forward.million')}`;
 };
 const shareNum = (num) => Number((Number(num) * 100).toFixed(1));
 
@@ -192,7 +195,8 @@ const loadData = async () => {
 
   //contentData
   let contentData = resultData.map((d) => {
-    let name = sectorIDToData(d.exp_sector).shortname;
+    const sectorData = sectorIDToData(d.exp_sector);
+    let name = translateSector({ catID: d.exp_sector, category: sectorData.shortname }, locale.value);
     let parent = sectorIDToData(d.exp_sector).sectiongroup;
     let value = Number(d.value);
     let share = Number(((Number(d.value) / totalF) * 100).toFixed(1));
@@ -211,7 +215,10 @@ const loadData = async () => {
   //Top5
   let top5 = contentData.sort((a, b) => b.ValMn - a.ValMn).slice(0, 5);
 
-  let gData = [...sectorColors, ...contentData];
+  let gData = [
+    ...sectorColors.map((item) => ({ ...item, name: translateSectorGroup(item.id, locale.value) })),
+    ...contentData,
+  ];
 
   isLoading.value = false;
   plotGraph(gData, totalF, gTotal, top5);
@@ -226,20 +233,14 @@ const loadData = async () => {
 };
 
 const plotGraph = (gData, totalF, gTotal, top5) => {
-  let title = `How is ${exporting.value.name}'s contribution to export production in ${importing.value.name} distributed across sectors?`;
-  let subtitle = `Gross exports of ${exporting.value.name} to ${
-    importing.value.name
-  } amount to ${moneyShort(gTotal)} in ${
-    year.value
-  }. Of these exports, ${moneyShort(totalF)} is used by ${
-    importing.value.name
-  } for its own export production, and come mainly from the following exporting sectors in ${
-    exporting.value.name
-  }: ${top5[0].name} (${top5[0].sharePct}%), ${top5[1].name} (${
-    top5[1].sharePct
-  }%), ${top5[2].name} (${top5[2].sharePct}%), ${top5[3].name} (${
-    top5[3].sharePct
-  }%) and ${top5[4].name} (${top5[4].sharePct}%).`;
+  let title = t('forward.sectorContributionTitle', { exporting: exporting.value.name, importing: importing.value.name });
+  let subtitle = t('forward.sectorSubtitle', {
+    exporting: exporting.value.name,
+    importing: importing.value.name,
+    gross: moneyShort(gTotal),
+    year: year.value,
+    forward: moneyShort(totalF),
+  });
 
   if (chartInstance) {
     chartInstance.destroy();
@@ -285,13 +286,13 @@ const plotGraph = (gData, totalF, gTotal, top5) => {
           `$${Number(n || 0).toLocaleString(undefined, {
             minimumFractionDigits: 1,
             maximumFractionDigits: 1,
-          })} million`;
+          })} ${t('forward.million')}`;
 
         return `
       <div >
         <div style="font-weight:700">${name}</div>
-        <div>Share: ${share}%</div>
-        <div>Value: ${moneyShort(valMn)}</div>
+        <div>${t('forward.share')}: ${share}%</div>
+        <div>${t('forward.value')}: ${moneyShort(valMn)}</div>
       </div>`;
       },
     },
@@ -318,6 +319,7 @@ watch(
   () => loadData(),
   { immediate: false }
 );
+watch(locale, () => loadData());
 </script>
 
 <style lang="scss" scoped></style>

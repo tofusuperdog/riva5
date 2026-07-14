@@ -4,8 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Top five exporting sectors in {{ exporting.name }} to
-      {{ importing.name }} across periods
+      {{ t('forward.topSectorsPeriods', { exporting: exporting.name, importing: importing.name }) }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -40,13 +39,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t('forward.preparing') }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t('forward.rendering') }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t('forward.patience') }}
             </div>
           </div>
         </div>
@@ -66,7 +65,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t('forward.viewLess') : t('forward.viewMore') }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -96,6 +95,9 @@ import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from 'vue-i18n';
+import { translateSector } from "../../i18n/sectors";
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -157,8 +159,8 @@ const moneyShort = (n) => {
   if (n == null || isNaN(n)) return "-";
   const abs = Math.abs(n);
 
-  if (abs >= 1000) return `$${(n / 1000).toFixed(1)} billion`;
-  return `$${n.toFixed(1)} million`;
+  if (abs >= 1000) return `$${(n / 1000).toFixed(1)} ${t('forward.billion')}`;
+  return `$${n.toFixed(1)} ${t('forward.million')}`;
 };
 
 const shareNum = (num) => Number((Number(num) * 100).toFixed(1));
@@ -219,7 +221,8 @@ const loadData = async () => {
   let rawFinal = rawData.map((d) => {
     let tf = totalFList.value[yearList.value.indexOf(Number(d.year))];
     let sectorID = d.exp_sector;
-    let sectorName = sectorIDToData(sectorID).shortname;
+    const sectorData = sectorIDToData(sectorID);
+    let sectorName = translateSector({ catID: sectorID, category: sectorData.shortname }, locale.value);
     let sectorGroup = sectorIDToData(sectorID).sectiongroup;
     let value = Number(d.value);
     let share = shareNum(value / tf);
@@ -246,7 +249,8 @@ const loadData = async () => {
 
   seriesMain.value = [];
   top5.forEach((sectorID, i) => {
-    let name = sectorIDToData(sectorID).shortname;
+    const sectorData = sectorIDToData(sectorID);
+    let name = translateSector({ catID: sectorID, category: sectorData.shortname }, locale.value);
 
     let V1 = num1point(
       rawFinal1
@@ -297,7 +301,7 @@ const loadData = async () => {
 };
 
 const plotGraph = () => {
-  let title = `Which exporting sectors in ${exporting.value.name} contribute most to ${importing.value.name}'s export production over periods?`;
+  let title = t('forward.topSectorPeriodsTitle', { exporting: exporting.value.name, importing: importing.value.name });
   let series = seriesMain.value;
   let categoriesData = [periodList.value[0].label1, periodList.value[0].label2];
   Highcharts.chart("chartFISRange02", {
@@ -310,7 +314,7 @@ const plotGraph = () => {
     },
     yAxis: {
       title: {
-        text: "Percent of Forward Linkages",
+        text: t('forward.percentForward'),
       },
       labels: {
         format: "{value}%",
@@ -328,9 +332,9 @@ const plotGraph = () => {
 
       formatter() {
         return `<div style="font-weight:700">${this.series.name}</div>
-        <div>Year: ${this.key}</div>
-        <div>Share: ${this.y.toFixed(1)}% of forward linkages</div>
-        <div>Value: ${moneyShort(this.point.value)}</div>
+        <div>${t('forward.year')}: ${this.key}</div>
+        <div>${t('forward.share')}: ${this.y.toFixed(1)}% ${t('forward.ofForward')}</div>
+        <div>${t('forward.value')}: ${moneyShort(this.point.value)}</div>
         `;
       },
     },
@@ -345,18 +349,18 @@ const desGen = (top5) => {
     let lasty = seriesMain.value[i].data[1].y;
     let firsty = seriesMain.value[i].data[0].y;
     let diff = lasty - firsty;
-    let textdiff = "unchanged";
+    let textdiff = t('backward.charts.unchanged');
     if (diff < 0) {
-      textdiff = "down by " + Math.abs(diff).toFixed(1) + " percentage points";
+      textdiff = t('backward.charts.downBy', { value: Math.abs(diff).toFixed(1) });
     } else if (diff > 0) {
-      textdiff = "up by " + Math.abs(diff).toFixed(1) + " percentage points";
+      textdiff = t('backward.charts.upBy', { value: Math.abs(diff).toFixed(1) });
     }
 
     desData.value.push({
       sectorName: seriesMain.value[i].name,
       color: colorList[i],
       img: `/images/sector/${i + 1}/${top5[i]}.svg`,
-      des: `During ${periodList.value[0].label2}, ${seriesMain.value[i].name} represent ${lasty}% of ${exporting.value.name}'s value added used for further export production in ${importing.value.name}, ${textdiff} compared to the ${periodList.value[0].label1} period.`,
+      des: t('forward.sectorPeriodDescription', { current: periodList.value[0].label2, sector: seriesMain.value[i].name, share: lasty, exporting: exporting.value.name, importing: importing.value.name, change: textdiff, previous: periodList.value[0].label1 }),
     });
   }
 };
@@ -370,6 +374,7 @@ onMounted(async () => {
   await loadSectorList();
   await loadData();
 });
+watch(locale, () => loadData());
 </script>
 
 <style lang="scss" scoped></style>

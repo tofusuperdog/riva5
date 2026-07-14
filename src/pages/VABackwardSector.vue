@@ -1,10 +1,9 @@
 <template>
   <div class="flex flex-col min-h-screen">
     <main class="flex-1">
-      <VAHeader :menu="pageName" class="fixed top-0 left-0 w-full" />
+      <HeaderMain class="!z-[1000]" />
       <VATitle
         :menu="pageName"
-        class="mt-15"
         :isShare="isShareOpen"
         :ShareText="inputDataFinal"
       />
@@ -15,7 +14,7 @@
         @isShowGraph="checkShowGraph"
       />
       <VAKeyWithoutData v-if="!isShowGraph" class="" />
-      <div v-if="isShowGraph" class="">
+      <div v-if="isShowGraph" :key="locale" class="">
         <VAKey
           v-if="isShowGraph && inputDataFinal"
           :inputData="inputDataFinal"
@@ -57,7 +56,7 @@
 </template>
 
 <script setup>
-import VAHeader from "../components/VAHeader.vue";
+import HeaderMain from "../components/Header.vue";
 import VATitle from "../components/VATitle.vue";
 import VAContentMain from "../components/VABackwardSector/VAContentMain.vue";
 
@@ -77,6 +76,9 @@ import VARegionS from "../components/VABackwardSector/VARegionS.vue";
 import FooterMain from "../components/Footer.vue";
 
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { locale } = useI18n({ useScope: "global" });
 
 const pageName = ref("BackwardLinkages");
 const inputDataFinal = ref(null);

@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Forward linkages in {{ regionName }} economies
+      {{ t('forward.inRegion', { region: regionName }) }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div class="flex flex-col lg:flex-row">
@@ -24,6 +24,9 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from 'vue-i18n';
+import { translateSector, translateSectorGroup } from "../../i18n/sectors";
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -190,7 +193,8 @@ const loadData = async () => {
   //จัดข้อมูล
   let rawFinal = rawData.map((d) => {
     let sectorID = d.exp_sector;
-    let sectorName = sectorIDtoData(sectorID).shortname;
+    const sectorData = sectorIDtoData(sectorID);
+    let sectorName = translateSector({ catID: sectorID, category: sectorData.shortname }, locale.value);
     let sectorGroup = sectorIDtoData(sectorID).sectiongroup;
     let value = Number(d.value);
     let exp_country = d.exp_country;
@@ -226,7 +230,7 @@ const loadData = async () => {
     });
 
     seriesMain.value.push({
-      name: group,
+      name: translateSectorGroup(group, locale.value),
       color: sectorColors.find((d) => d.id == group).color,
       data: dataTemp,
     });
@@ -274,8 +278,8 @@ const loadData = async () => {
 
 function moneyFmt(n) {
   n = Number(n);
-  if (n >= 1000) return `$${(n / 1000).toFixed(1)} billion`;
-  return `$${n.toFixed(1)} million`;
+  if (n >= 1000) return `$${(n / 1000).toFixed(1)} ${t('forward.billion')}`;
+  return `$${n.toFixed(1)} ${t('forward.million')}`;
 }
 
 function mainTooltipFormatter() {
@@ -285,27 +289,23 @@ function mainTooltipFormatter() {
     <div style="min-width:220px">
       <div style="font-weight:700;font-size:16px">${country}</div>
       <div style="margin-top:4px">${this.series.name}</div>
-      <div>Share:&nbsp; ${this.y.toFixed(1)}% of gross exports to ${
-    importing.value.name
-  }
-  </div>
-      <div>Value:&nbsp; ${moneyFmt(this.point.value)}</div>
+      <div>${t('forward.share')}:&nbsp; ${this.y.toFixed(1)}%</div>
+      <div>${t('forward.value')}:&nbsp; ${moneyFmt(this.point.value)}</div>
     </div>`;
 }
 function pieTooltipFormatter() {
   return `
     <div style="min-width:200px">
       <div style="font-weight:700">${this.point.name}</div>
-      <div>Share:&nbsp; ${this.y.toFixed(2)}%</div>
-      <div>Value:&nbsp; ${moneyFmt(this.point.value)}</div>
+      <div>${t('forward.share')}:&nbsp; ${this.y.toFixed(2)}%</div>
+      <div>${t('forward.value')}:&nbsp; ${moneyFmt(this.point.value)}</div>
     </div>`;
 }
 
 const drawChart = () => {
-  const title = `How are ${regionName.value} economies’ contribution to export production in ${importing.value.name} distributed across sectors?`;
-  const yTitle = `Percent of gross exports to ${importing.value.name}`;
-  const mainSubtitleText =
-    "Click on a bar to see the individual economies associated with a region";
+  const title = t('forward.regionContributionTitle', { region: regionName.value, importing: importing.value.name });
+  const yTitle = t('forward.percentGrossTo', { economy: importing.value.name });
+  const mainSubtitleText = t('forward.clickBar');
 
   if (chartInstance) {
     chartInstance.destroy();
@@ -339,7 +339,7 @@ const drawChart = () => {
           const categories = this.xAxis[0].categories || [];
           const country = e.point?.category ?? categories[e.point.x];
           this.setTitle({
-            text: `Where does ${country}'s' contribute to export production in ${importing.value.name} distributed across sectors?`,
+            text: t('forward.countrySectorTitle', { country, importing: importing.value.name }),
           });
         },
         drillup() {
@@ -444,6 +444,7 @@ onMounted(async () => {
   await loadSectorList();
   await loadData();
 });
+watch(locale, () => loadData());
 </script>
 
 <style lang="scss" scoped></style>

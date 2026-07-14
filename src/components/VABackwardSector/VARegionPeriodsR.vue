@@ -2,7 +2,7 @@
   <div
     class="max-w-[1200px] w-[95%] mx-auto bg-white border border-[#DDDDDD] rounded-md mt-4"
   >
-    <div class="p-2 text-lg font-bold fblack">Source region across periods</div>
+    <div class="p-2 text-lg font-bold fblack">{{ t("backward.charts.sourceRegionPeriods") }}</div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
       v-if="!isAvail"
@@ -17,10 +17,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("backward.charts.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -59,13 +59,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t("backward.charts.preparing") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t("backward.charts.rendering") }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t("backward.charts.patience") }}
             </div>
           </div>
         </div>
@@ -89,7 +89,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t("backward.charts.viewLess") : t("backward.charts.viewMore") }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -104,7 +104,7 @@
             </div>
           </div>
           <div class="cursor-pointer text-[#0672CB]" @click="openBreakdown(r)">
-            <u>Click here to see the breakdown</u>
+            <u>{{ t("backward.charts.breakdown") }}</u>
           </div>
           <div>{{ r.desc }}</div>
         </div>
@@ -124,7 +124,7 @@
           ></div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="CLOSE" color="primary" v-close-popup />
+          <q-btn flat :label="t('backward.charts.close')" color="primary" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -136,9 +136,12 @@ import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { locale, t } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 const showDetail = ref($q.screen.gt.sm);
@@ -168,7 +171,7 @@ const regionCards = ref([
   {
     id: 0,
     key: "Asia-Pacific",
-    title: "Asia-Pacific",
+    title: t("backward.charts.regionAsia"),
     color: "#1E88E5",
     icon: "images/asia.svg",
     desc: "",
@@ -176,7 +179,7 @@ const regionCards = ref([
   {
     id: 1,
     key: "Europe",
-    title: "Europe",
+    title: t("backward.charts.regionEurope"),
     color: "#FB8C00",
     icon: "images/europe.svg",
     desc: "",
@@ -184,7 +187,7 @@ const regionCards = ref([
   {
     id: 2,
     key: "North America",
-    title: "North America",
+    title: t("backward.charts.regionNorthAmerica"),
     color: "#2E7D32",
     icon: "images/northamerica.svg",
     desc: "",
@@ -192,7 +195,7 @@ const regionCards = ref([
   {
     id: 3,
     key: "Latin America",
-    title: "Latin America",
+    title: t("backward.charts.regionLatinAmerica"),
     color: "#8E24AA",
     icon: "images/latinamerica.svg",
     desc: "",
@@ -200,7 +203,7 @@ const regionCards = ref([
   {
     id: 4,
     key: "Rest of the World",
-    title: "Rest of the World",
+    title: t("backward.charts.regionRestWorld"),
     color: "#EC69B3",
     icon: "images/row.svg",
     desc: "",
@@ -214,6 +217,13 @@ const regionList = [
   "Latin America",
   "Rest of the World",
 ];
+const regionLabel = {
+  "Asia-Pacific": t("backward.charts.regionAsia"),
+  Europe: t("backward.charts.regionEurope"),
+  "North America": t("backward.charts.regionNorthAmerica"),
+  "Latin America": t("backward.charts.regionLatinAmerica"),
+  "Rest of the World": t("backward.charts.regionRestWorld"),
+};
 
 const colors = ["#1F77B4", "#FF813D", "#2CA02C", "#9467BD", "#E377C2"];
 
@@ -330,7 +340,7 @@ const sumDataByEco = (data1, data2) => {
           };
 
     return {
-      name: d.eco, // ชื่อ series
+      name: translateEconomy({ iso: d.iso, name: d.eco }, locale.value), // ชื่อ series
       data: [
         {
           y: shareNum(d.totalValue / backTotal.value[0]),
@@ -349,8 +359,8 @@ const toB = (m) => Number((Number(m) / 1000).toFixed(1)); // million -> billion 
 
 function formatMainValue(vMillion) {
   const v = Number(vMillion || 0);
-  if (v < 1000) return `${v.toFixed(1)} million`;
-  return `${toB(v).toFixed(1)} billion`;
+  if (v < 1000) return `${v.toFixed(1)} ${t("backward.charts.million")}`;
+  return `${toB(v).toFixed(1)} ${t("backward.charts.billion")}`;
 }
 
 const loadData = async () => {
@@ -405,7 +415,7 @@ const loadData = async () => {
   seriesData.value = [];
   regionList.forEach((d, i) => {
     let dataInput = {
-      name: d,
+      name: regionLabel[d],
       color: colors[i],
       data: genDataGraph(i, rawDataSet1, rawDataSet2),
     };
@@ -425,39 +435,19 @@ const loadData = async () => {
     let lastY = seriesData.value[i].data[1].y;
     let firstY = seriesData.value[i].data[0].y;
 
-    let textdiff = "unchanged from";
+    let textdiff = t("backward.charts.unchanged");
     if (lastY < firstY) {
-      textdiff =
-        "down by " +
-        Math.abs(lastY - firstY).toFixed(1) +
-        " percentage points compared to";
+      textdiff = t("backward.charts.downBy", { value: Math.abs(lastY - firstY).toFixed(1) });
     } else if (lastY > firstY) {
-      textdiff =
-        "up by " +
-        Math.abs(lastY - firstY).toFixed(1) +
-        " percentage points compared to";
+      textdiff = t("backward.charts.upBy", { value: Math.abs(lastY - firstY).toFixed(1) });
     }
 
     let textMax = "";
     if (i != 4) {
-      textMax = `${
-        sumTemp[0].name
-      } was the top regional source economy, accounting for ${
-        sumTemp[0].data[1].y
-      }% of ${
-        exporting.value.name
-      }'s total FVA for ${sector.value.sectorShortName.toLowerCase()} in ${
-        yearEnd.value
-      }.`;
+      textMax = t("backward.charts.regionalTop", { source: sumTemp[0].name, share: sumTemp[0].data[1].y, year: yearEnd.value });
     }
 
-    regionCards.value[i].desc = `During ${
-      yearPeriods.value[0].label2
-    }, ${lastY}% of ${
-      exporting.value.name
-    }'s ${sector.value.sectorShortName.toLowerCase()} FVA was sourced from ${d}, ${textdiff} the ${
-      yearPeriods.value[0].label1
-    } period. ${textMax}`;
+    regionCards.value[i].desc = `${t("backward.charts.regionPeriodDescription", { current: yearPeriods.value[0].label2, share: lastY, exporting: exporting.value.name, sector: sector.value.sectorShortName, region: regionCards.value[i].title, change: textdiff, previous: yearPeriods.value[0].label1 })} ${textMax}`;
   });
 
   isLoading.value = false;
@@ -466,7 +456,7 @@ const loadData = async () => {
 
 const fmt = {
   pct: (n) => Highcharts.numberFormat(n, 1) + "%",
-  mil: (n) => "$" + Highcharts.numberFormat(n, 1) + " million",
+  mil: (n) => "$" + Highcharts.numberFormat(n, 1) + " " + t("backward.charts.million"),
 };
 
 const drawChart = () => {
@@ -475,17 +465,9 @@ const drawChart = () => {
 
   // ช่วย format ตัวเลข
 
-  let title = `Which regions are the main source of Foreign Value Added (FVA) embedded in ${
-    exporting.value.name
-  }'s ${sector.value.sectorShortName.toLowerCase()}${
-    sector.value.sectorShortName == "All sectors" ? "'" : "'s"
-  } exports to ${importing.value.name}?`;
+  const title = t("backward.charts.regionsTitle", { exporting: exporting.value.name, sector: sector.value.sectorShortName, importing: importing.value.name });
 
-  let subTitle = `Total backward linkages amounted to USD ${formatMainValue(
-    backTotal.value[0]
-  )} in ${yearPeriods.value[0].label1} and USD ${formatMainValue(
-    backTotal.value[1]
-  )} in ${yearPeriods.value[0].label2}.`;
+  const subTitle = t("backward.charts.totalPeriods", { firstValue: formatMainValue(backTotal.value[0]), firstPeriod: yearPeriods.value[0].label1, secondValue: formatMainValue(backTotal.value[1]), secondPeriod: yearPeriods.value[0].label2 });
   Highcharts.chart(chartBSRange02, {
     chart: { type: "column", spacing: [16, 24, 16, 24] },
     title: {
@@ -503,7 +485,7 @@ const drawChart = () => {
     yAxis: {
       min: 0,
       max: 100,
-      title: { text: "Percent of Backward Linkages" },
+      title: { text: t("backward.charts.percentBackward") },
       labels: {
         formatter() {
           return this.value + "%";
@@ -533,9 +515,9 @@ const drawChart = () => {
         return `
           <div >
             <b>${this.series.name}</b><br/>
-            <span>Year: </span>${p.year || this.x}<br/>
-            <span>Share: </span>${fmt.pct(p.y)} of backward linkages<br/>
-            <span>Value: </span>${fmt.mil(p.value)}
+            <span>${t("backward.charts.year")}: </span>${p.year || this.x}<br/>
+            <span>${t("backward.charts.share")}: </span>${fmt.pct(p.y)} ${t("backward.charts.ofBackward")}<br/>
+            <span>${t("backward.charts.value")}: </span>${fmt.mil(p.value)}
           </div>
         `;
       },
@@ -555,7 +537,7 @@ const drawBreakdown = () => {
     xAxis: { categories, tickLength: 0 },
     yAxis: {
       min: 0,
-      title: { text: "Percent of Backward Linkage" },
+      title: { text: t("backward.charts.percentBackward") },
       labels: {
         formatter() {
           return this.value + "%";
@@ -579,9 +561,9 @@ const drawBreakdown = () => {
         return `
           <div >
             <b>${this.series.name}</b><br/>
-            <span>Year: </span>${p.year || this.x}<br/>
-            <span>Share: </span>${fmt.pct(p.y)}  of backward linkages<br/>
-            <span>Value: </span>${fmt.mil(p.value)}
+            <span>${t("backward.charts.year")}: </span>${p.year || this.x}<br/>
+            <span>${t("backward.charts.share")}: </span>${fmt.pct(p.y)} ${t("backward.charts.ofBackward")}<br/>
+            <span>${t("backward.charts.value")}: </span>${fmt.mil(p.value)}
 
           </div>
         `;

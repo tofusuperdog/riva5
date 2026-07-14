@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Backward linkages by exporting sector
+      {{ t("backward.charts.bySector") }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -20,10 +20,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("backward.charts.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range or economy selection.
+              {{ t("backward.charts.tryDifferentEconomy") }}
             </div>
           </div>
         </div>
@@ -61,13 +61,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t("backward.charts.preparing") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t("backward.charts.rendering") }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t("backward.charts.patience") }}
             </div>
           </div>
         </div>
@@ -91,7 +91,7 @@
             :key="c.id"
           >
             <div class="w-3 h-3" :style="{ backgroundColor: c.color }"></div>
-            <div class="pl-2">{{ c.name }}</div>
+            <div class="pl-2">{{ translateSectorGroup(c.id, locale) }}</div>
           </div>
         </div>
       </div>
@@ -104,11 +104,14 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateSector, translateSectorGroup } from "../../i18n/sectors";
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
 const $q = useQuasar();
+const { t, locale } = useI18n();
 
 // ===== input from parent component =====
 const exporting = ref(props.inputData.exporting);
@@ -168,9 +171,9 @@ const sectorColors = [
 const moneyNum = (num) => {
   num = Number(num);
   if (num < 1000) {
-    return "$" + num.toFixed(1) + " million";
+    return "$" + num.toFixed(1) + " " + t("backward.charts.million");
   } else {
-    return "$" + (num / 1000).toFixed(1) + " billion";
+    return "$" + (num / 1000).toFixed(1) + " " + t("backward.charts.billion");
   }
 };
 
@@ -205,9 +208,9 @@ const loadData = async () => {
   let sectorList = resSector.data;
 
   let dataGraph = resultData.map((d) => {
-    let name = sectorList.filter((x) => x.catID == d.exp_sector)[0].shortname;
-    let parent = sectorList.filter((x) => x.catID == d.exp_sector)[0]
-      .sectiongroup;
+    const sector = sectorList.find((x) => x.catID == d.exp_sector);
+    let name = translateSector({ catID: d.exp_sector, category: sector?.shortname || String(d.exp_sector) }, locale.value);
+    let parent = sector?.sectiongroup;
     let share = Number(((Number(d.value) / totalBack) * 100).toFixed(1));
     let color = sectorColors.filter((x) => x.id == parent)[0].color;
 
@@ -236,27 +239,14 @@ const loadData = async () => {
 
   let getdata = [];
 
-  getdata.push(...sectorColors);
+  getdata.push(...sectorColors.map((item) => ({ ...item, name: translateSectorGroup(item.id, locale.value) })));
   getdata.push(...dataGraph);
 
   let top5 = dataGraph.sort((a, b) => b.value - a.value).slice(0, 5);
 
-  let title = `How is ${source.value.name}'s value-added in ${exporting.value.name}'s exports to ${importing.value.name} distributed across sectors?`;
-  let subtitle = `Gross exports of ${exporting.value.name} to ${
-    importing.value.name
-  } amount to ${moneyNum(gTotal)} in ${
-    year.value
-  }. Of these exports, ${moneyNum(
-    totalBack
-  )} is imported content that comes from ${
-    source.value.name
-  }, mainly used in the following exporting sectors in ${
-    exporting.value.name
-  }: ${top5[0].name} (${top5[0].value}%), ${top5[1].name} (${
-    top5[1].value
-  }%), ${top5[2].name} (${top5[2].value}%), ${top5[3].name} (${
-    top5[3].value
-  }%), ${top5[4].name} (${top5[4].value}%).`;
+  let title = t("backward.charts.sourceSectorSingleTitle", { source: source.value.name, exporting: exporting.value.name, importing: importing.value.name });
+  const sectors = top5.map((item) => `${item.name} (${item.value}%)`).join(", ");
+  let subtitle = t("backward.charts.sourceSectorSubtitle", { exporting: exporting.value.name, importing: importing.value.name, gross: moneyNum(gTotal), year: year.value, backward: moneyNum(totalBack), source: source.value.name, sectors });
 
   isLoading.value = false;
 
@@ -305,13 +295,13 @@ const loadData = async () => {
           `$${Number(n || 0).toLocaleString(undefined, {
             minimumFractionDigits: 1,
             maximumFractionDigits: 1,
-          })} million`;
+          })} ${t("backward.charts.million")}`;
 
         return `
       <div style="min-width:200px">
         <div style="font-weight:700">${name}</div>
-        <div>Share: ${share}%</div>
-        <div>Value: ${moneyFmt(valMn)}</div>
+        <div>${t("backward.charts.share")}: ${share}%</div>
+        <div>${t("backward.charts.value")}: ${moneyFmt(valMn)}</div>
       </div>`;
       },
     },
@@ -339,6 +329,7 @@ watch(
     () => importing.value?.iso,
     () => source.value?.iso,
     () => year.value,
+    () => locale.value,
   ],
   () => loadData(),
   { immediate: false }

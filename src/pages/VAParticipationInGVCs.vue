@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col bg-[#f7f7f7]">
-    <main>
-      <VAHeader :menu="pageName" class="fixed top-0 left-0 w-full" />
+    <main :key="locale">
+      <HeaderMain class="participation-top-menu" />
       <VATitle
         :menu="pageName"
         class="mt-15"
@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import VAHeader from "../components/VAHeader.vue";
+import HeaderMain from "../components/Header.vue";
 import VATitle from "../components/VATitle.vue";
 import VAContentMainDI from "../components/VAParticipation/VAContentMainP.vue";
 import VAKeyP from "../components/VAParticipation/VAKeyP.vue";
@@ -68,6 +68,9 @@ import VAGrossPS from "../components/VAParticipation/VAGrossPS.vue";
 import FooterMain from "../components/Footer.vue";
 
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { locale } = useI18n({ useScope: "global" });
 
 const pageName = ref("ParticipationInGVCs");
 const inputDataFinal = ref(null);
@@ -107,5 +110,13 @@ const InputSingleYear = (yearInput) => {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.participation-top-menu {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2147483647 !important;
+}
+</style>
 1

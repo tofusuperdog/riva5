@@ -3,7 +3,7 @@
     class="max-w-[1200px] w-[95%] mx-auto bg-white border border-[#DDDDDD] rounded-md mt-4"
   >
     <div class="p-2 text-lg font-bold fblack">
-      Gross and value added trade balance
+      {{ t("participation.grossAndValueTradeBalance") }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
 
@@ -20,10 +20,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("participation.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -45,9 +45,11 @@
 import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { t } = useI18n({ useScope: "global" });
 
 /* ---------- reactive inputs ---------- */
 const exporting = computed(() => props.inputData?.exporting ?? null);
@@ -78,8 +80,8 @@ function tooltipHTML() {
   return `
     <div style="min-width:240px">
       <div style="font-weight:700">${this.series.name}</div>
-      <div>Year:&nbsp; ${yr}</div>
-      <div>Share:&nbsp; ${y}% of bilateral gross trade</div>
+      <div>${t("participation.year")}:&nbsp; ${yr}</div>
+      <div>${t("participation.share")}:&nbsp; ${y}% ${t("participation.ofBilateral")}</div>
     </div>
   `;
 }
@@ -99,22 +101,18 @@ async function drawChart(rows = []) {
 
   const series = [
     {
-      name: "Value Added Trade Balance",
+      name: t("participation.valueAddedTradeBalance"),
       color: "#1E88E5",
       data: [{ y: r1(toPct(vatb.value)), custom: { year: yearText } }],
     },
     {
-      name: "Gross Trade Balance",
+      name: t("participation.grossTradeBalance"),
       color: "#2E7D6E",
       data: [{ y: r1(toPct(gtb.value)), custom: { year: yearText } }],
     },
   ];
 
-  const title = `How does ${
-    exporting.value.name
-  }'s gross and value-added trade balance in ${String(
-    sector.value?.sectorShortName ?? ""
-  ).toLowerCase()} with ${importing.value.name} differ?`;
+  const title = t("participation.balanceTitle", { exporting: exporting.value.name, sector: String(sector.value?.sectorShortName ?? "").toLowerCase(), importing: importing.value.name });
 
   const options = {
     chart: { type: "column", backgroundColor: "#fff" },
@@ -129,7 +127,7 @@ async function drawChart(rows = []) {
       labels: { enabled: false },
     },
     yAxis: {
-      title: { text: "Percent of bilateral gross trade" },
+      title: { text: t("participation.percentBilateral") },
       gridLineColor: "#eee",
     },
     legend: {

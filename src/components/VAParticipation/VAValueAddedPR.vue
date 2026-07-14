@@ -3,7 +3,7 @@
     class="max-w-[1200px] w-[95%] mx-auto bg-white border border-[#DDDDDD] rounded-md mt-4"
   >
     <!-- หัวข้อ -->
-    <div class="p-2 text-lg font-bold fblack">Value-added breakdown</div>
+    <div class="p-2 text-lg font-bold fblack">{{ t("participation.valueAddedBreakdown") }}</div>
     <div class="border-b border-[#DDDDDD]"></div>
 
     <div
@@ -19,10 +19,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("participation.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -43,7 +43,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t("participation.viewLess") : t("participation.viewMore") }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -77,48 +77,43 @@ import {
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
 
 /* ----------------------------- constants ----------------------------- */
 const VAR_MAP = [
   {
     key: "Intermediate_directly_consumed",
-    name: "DVA intermediate goods",
-    title: "DVA intermediate goods",
+    labelKey: "dvaIntermediate",
     color: "#26C6DA",
     code: "1.1",
   },
   {
     key: "Final_directly_consumed",
-    name: "DVA final goods",
-    title: "DVA final goods",
+    labelKey: "dvaFinal",
     color: "#1E88E5",
     code: "1.2",
   },
   {
     key: "Forward_linkages2",
-    name: "DVA intermediate goods exported back to original exporter",
-    title: "DVA intermediate goods exported back to original exporter",
+    labelKey: "dvaBack",
     color: "#FF8A65",
     code: "1.3",
   },
   {
     key: "Forward_linkages",
-    name: "DVA intermediate goods exported to a third economy",
-    title: "DVA intermediate goods exported to a third economy",
+    labelKey: "dvaThird",
     color: "#EC407A",
     code: "1.4",
   },
   {
     key: "Backward_linkages",
-    name: "Foreign Value Added (FVA)",
-    title: "Foreign Value Added (FVA)",
+    labelKey: "fva",
     color: "#26A69A",
     code: "1.5",
   },
   {
     key: "Double_counted_exports",
-    name: "Double-counted value",
-    title: "Double-counted value",
+    labelKey: "doubleCounted",
     color: "#8E24AA",
     code: "1.6",
   },
@@ -127,6 +122,7 @@ const VAR_MAP = [
 /* ----------------------------- setup ----------------------------- */
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { t } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 const showDetail = ref($q.screen.gt.sm);
@@ -151,17 +147,17 @@ const fmtMil = (n) =>
   `$${Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })} million`;
+  })} ${t("participation.million")}`;
 
 const safeSectorName = computed(
-  () => sector.value?.sectorShortName ?? "All sectors"
+  () => sector.value?.sectorShortName ?? t("participation.allSectors")
 );
 const lowerSector = computed(() => safeSectorName.value.toLowerCase());
 
 const titleText = computed(() => {
-  const exp = exporting.value?.name ?? "Exporter";
-  const imp = importing.value?.name ?? "partner economy";
-  return `How have ${exp}'s exports of ${safeSectorName.value} to ${imp} been produced and utilized over the years?`;
+  const exp = exporting.value?.name ?? t("participation.exporter");
+  const imp = importing.value?.name ?? t("participation.partnerEconomy");
+  return t("participation.productionYearsTitle", { exporting: exp, sector: safeSectorName.value, importing: imp });
 });
 
 function destroyChart() {
@@ -182,7 +178,7 @@ function normalizeForChart(rows = []) {
   );
 
   const series = VAR_MAP.map((cfg) => ({
-    name: cfg.name,
+    name: t(`participation.${cfg.labelKey}`),
     color: cfg.color,
     data: years.map((y) => {
       const r = rows.find((x) => Number(x.year) === y && x.var === cfg.key);
@@ -215,7 +211,7 @@ async function upsertChart({ years, series }) {
       },
 
       caption: {
-        text: "Percentages may not total 100% because of rounding.",
+        text: t("participation.percentagesRounding"),
         align: "center",
         verticalAlign: "bottom",
         y: 10,
@@ -230,7 +226,7 @@ async function upsertChart({ years, series }) {
       yAxis: {
         min: 0,
         max: 100,
-        title: { text: "Percent of gross exports" },
+        title: { text: t("participation.percentGross") },
         labels: {
           formatter() {
             return this.value + "%";
@@ -244,9 +240,9 @@ async function upsertChart({ years, series }) {
           const p = this.point;
           return `
             <b>${this.series.name}</b><br/>
-            Year: ${p.year}<br/>
-            Share: ${fmtPct(p.share)} of gross exports<br/>
-            Value: ${fmtMil(p.value)}
+            ${t("participation.year")}: ${p.year}<br/>
+            ${t("participation.share")}: ${fmtPct(p.share)} ${t("participation.ofGross")}<br/>
+            ${t("participation.value")}: ${fmtMil(p.value)}
           `;
         },
       },
@@ -275,8 +271,8 @@ function buildDescriptions(rows = []) {
     (m, r) => Math.max(m, Number(r.year)),
     -Infinity
   );
-  const exp = exporting.value?.name ?? "Exporter";
-  const imp = importing.value?.name ?? "partner economy";
+  const exp = exporting.value?.name ?? t("participation.exporter");
+  const imp = importing.value?.name ?? t("participation.partnerEconomy");
 
   const shareOf = (key) => {
     const r = rows.find((x) => x.var === key && Number(x.year) === lastYear);
@@ -285,19 +281,20 @@ function buildDescriptions(rows = []) {
 
   const mkText = (key, pct) => {
     const pctTxt = fmtPct(pct);
+    const common = {
+      exporting: exp,
+      importing: imp,
+      sector: lowerSector.value,
+      year: lastYear,
+      share: pctTxt,
+    };
     switch (key) {
-      case "Intermediate_directly_consumed":
-        return `Domestic value added (DVA) in intermediate goods destined for final consumption in ${imp} represented ${pctTxt} of ${exp}'s gross exports in ${lowerSector.value} to ${imp} in ${lastYear}.`;
-      case "Final_directly_consumed":
-        return `Domestic value added (DVA) in final goods destined for final consumption in ${imp} represented ${pctTxt} of ${exp} in ${lowerSector.value} to ${imp} in ${lastYear}.`;
-      case "Forward_linkages2":
-        return `Domestic value added (DVA) in intermediate goods exports, further exported by ${imp} back to ${exp}, represented ${pctTxt} of ${exp}'s gross exports in ${lowerSector.value} to ${imp} in ${lastYear}.`;
-      case "Forward_linkages":
-        return `Domestic value added (DVA) in intermediate goods exports, further exported by ${imp} to a third economy, represented ${pctTxt} of ${exp}'s gross exports in ${lowerSector.value} to ${imp} in ${lastYear}.`;
-      case "Backward_linkages":
-        return `Foreign Value Added (FVA) (imported inputs) in ${exp}'s exports to ${imp} represented ${pctTxt} of ${exp}'s gross exports in ${lowerSector.value} to ${imp} in ${lastYear}.`;
-      case "Double_counted_exports":
-        return `Double-counted value due to repeated border crossings represented ${pctTxt} of ${exp}'s gross exports in ${lowerSector.value} to ${imp} in ${lastYear}.`;
+      case "Intermediate_directly_consumed": return t("participation.descIntermediate", common);
+      case "Final_directly_consumed": return t("participation.descFinal", common);
+      case "Forward_linkages2": return t("participation.descBack", common);
+      case "Forward_linkages": return t("participation.descThird", common);
+      case "Backward_linkages": return t("participation.descFva", common);
+      case "Double_counted_exports": return t("participation.descDouble", common);
       default:
         return "";
     }
@@ -308,7 +305,7 @@ function buildDescriptions(rows = []) {
     return {
       key: cfg.key,
       code: cfg.code,
-      title: cfg.title,
+      title: t(`participation.${cfg.labelKey}`),
       color: cfg.color,
       text: mkText(cfg.key, pct),
     };

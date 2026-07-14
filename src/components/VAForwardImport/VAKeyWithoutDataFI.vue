@@ -3,22 +3,24 @@
     class="max-w-[1200px] w-[95%] mx-auto relative z-100 bg-[#FFFFFF] border-1 border-[#DDDDDD] rounded-md p-2 md:p-4 mt-2 md:mt-4"
   >
     <div class="text-md md:text-lg font-semibold fblack">
-      Key Policy Questions (Select by importing economy)
+      {{ t('forward.importPolicyTitle') }}
     </div>
     <div class="fsub">
       <ul class="list-disc pl-6">
         <li>
-          Which sectors in the Importing Economy are most reliant on the inputs
-          provided by the Exporting Economy?
+          {{ t('forward.importPolicyOne', { economy: t('forward.exportingEconomy') }) }}
         </li>
         <li>
-          How does this compare across exporting economies from the same region?
+          {{ t('forward.compareExporters') }}
         </li>
       </ul>
     </div>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+</script>
 
 <style lang="scss" scoped></style>

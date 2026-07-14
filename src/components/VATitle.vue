@@ -11,7 +11,7 @@
             <img :src="iconFIle" alt="" class="h-4 md:h-6 lg:h-8" />
           </div>
           <div class="text-[18px] font-semibold fwhite md:text-2xl lg:text-3xl">
-            {{ pageName }}
+            {{ localizedPageName }}
           </div>
         </div>
         <div class="flex gap-2" v-show="menu != 'Dashboard'">
@@ -50,7 +50,7 @@
                   alt="Share"
                   class="h-3 md:h-4 lg:h-5 md:pr-1 px-1"
                 />
-                <span class="gt-xs pr-1">SHARE</span>
+                <span class="gt-xs pr-1">{{ shareAction }}</span>
               </div>
             </template>
           </q-btn>
@@ -59,7 +59,7 @@
           <div class="relative inline-block text-left">
             <q-btn
               outline
-              label="Resources"
+              :label="t('va.resources')"
               color="white"
               icon-right="arrow_drop_down"
               class="rounded px-4"
@@ -72,7 +72,7 @@
                     <div class="w-8">
                       <img src="/images/icon-user-guide.svg" class="w-5 h-5" />
                     </div>
-                    <div>User Guide</div>
+                    <div>{{ t("va.userGuide") }}</div>
                   </div>
                 </q-item> -->
                 <!-- <q-item clickable v-ripple>
@@ -80,7 +80,7 @@
                     <div class="w-8">
                       <img src="/images/icon-demo-vdo.svg" class="w-5 h-5" />
                     </div>
-                    <div>Demo Videos</div>
+                    <div>{{ t("va.demoVideos") }}</div>
                   </div>
                 </q-item> -->
                 <q-item clickable v-ripple>
@@ -88,7 +88,7 @@
                     <div class="w-8">
                       <img src="/images/icon-tech-notes.svg" class="w-5 h-5" />
                     </div>
-                    <div>Technical Notes</div>
+                    <div>{{ t("va.technicalNotes") }}</div>
                   </div>
                 </q-item>
                 <!-- <q-item clickable v-ripple>
@@ -96,7 +96,7 @@
                     <div class="w-8">
                       <img src="/images/icon-user-guide.svg" class="w-5 h-5" />
                     </div>
-                    <div>Download Data</div>
+                    <div>{{ t("va.downloadData") }}</div>
                   </div>
                 </q-item> -->
               </q-list>
@@ -114,14 +114,14 @@
               <div class="pt-1">
                 <img src="/images/shareIconB.svg" alt="" class="h-6" />
               </div>
-              <div class="text-xl pl-2 font-semibold">Share this page</div>
+              <div class="text-xl pl-2 font-semibold">{{ sharePage }}</div>
             </div>
             <div @click="isShareOpen = false" class="cursor-pointer">
               <img src="/images/closeIcon.svg" alt="" />
             </div>
           </div>
           <div class="fsub">
-            You can share this customized view of {{ pageName }}
+            {{ shareCustomized }}
           </div>
           <div class="pt-2 fsub">{{ shareInput }}</div>
           <div class="flex gap-4 pt-3 justify-center">
@@ -179,9 +179,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { Notify } from "quasar";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 const props = defineProps({
   menu: String,
   isShare: Boolean,
@@ -189,6 +190,23 @@ const props = defineProps({
 });
 
 const route = useRoute();
+const { t } = useI18n({ useScope: "global" });
+const localizedPageName = computed(() => {
+  if (props.menu === "Dashboard") return t("va.menu");
+  if (props.menu === "gvcoverview") return t("gvc.title");
+  if (props.menu === "ParticipationInGVCs") return t("participation.title");
+  if (props.menu === "BackwardLinkages") return t("backward.title");
+  return pageName.value;
+});
+const translationScope = computed(() =>
+  props.menu === "ParticipationInGVCs" ? "participation" : props.menu === "gvcoverview" ? "gvc" : null,
+);
+const shareAction = computed(() => translationScope.value ? t(`${translationScope.value}.shareAction`) : "SHARE");
+const sharePage = computed(() => translationScope.value ? t(`${translationScope.value}.sharePage`) : "Share this page");
+const shareCustomized = computed(() => translationScope.value
+  ? t(`${translationScope.value}.shareCustomized`, { page: localizedPageName.value })
+  : `You can share this customized view of ${pageName.value}`,
+);
 const pageName = ref("");
 const iconFIle = ref("");
 const resourceOpen = ref(false);
@@ -218,7 +236,7 @@ const copyToClipboard = async () => {
   try {
     await navigator.clipboard.writeText(shareLink.value);
     Notify.create({
-      message: "Copied to clipboard",
+      message: translationScope.value ? t(`${translationScope.value}.copied`) : "Copied to clipboard",
       color: "positive",
       position: "top",
       icon: "fa-solid fa-circle-check",

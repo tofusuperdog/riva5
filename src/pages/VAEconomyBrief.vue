@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col min-h-screen bg-[#f7f7f7]">
     <main class="flex-1 lg:mb-[200px]">
-      <VAHeader :menu="pageName" class="fixed top-0 left-0 w-full" />
+      <HeaderMain class="country-brief-top-menu" />
       <VATitle
         :menu="pageName"
         class="mt-15"
@@ -26,7 +26,7 @@
           >
             <div class="w-full max-w-[320px]">
               <EcoSelect
-                label="Economy"
+                :label="t('economyBrief.economy')"
                 :initialValue="initialValue"
                 @update:selected="onUpdateExportISO"
                 :isShareOpen="isShareOpen"
@@ -41,13 +41,13 @@
                 :disabled="!canDownload"
                 @click="downloadPDF"
               >
-                <span v-if="!isDownloading">Download</span>
+                <span v-if="!isDownloading">{{ t('economyBrief.download') }}</span>
 
                 <span v-else class="inline-flex items-center gap-2">
                   <span
                     class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"
                   ></span>
-                  Preparing...
+                  {{ t('economyBrief.preparing') }}
                 </span>
               </button>
             </div>
@@ -59,78 +59,7 @@
       <div
         class="max-w-[1200px] w-[95%] mx-auto relative z-100 bg-[#FFFFFF] border-1 border-[#DDDDDD] rounded-md p-2 md:p-4 mt-2 md:mt-4 fblack"
       >
-        <div class="text-lg font-semibold">
-          How to interpret this Economy Briefs?
-        </div>
-        <div>
-          This Economy Brief summarizes how an economy is integrated into Global
-          Value Chains (GVCs) through <b>backward</b> and
-          <b>forward</b> linkages. Results are shown as shares of gross exports
-          (%) and values in USD millions or USD billions, depending on the
-          economy's scale, to highlight both the <b>relative importance</b> and
-          the <b>magnitude</b> of each linkage.
-        </div>
-
-        <div class="pt-3 font-semibold">
-          1) GVC overview: Backward vs. Forward linkages
-        </div>
-        <div class="pl-5">
-          <ul class="list-disc">
-            <li>
-              <b>Backward linkages (Foreign value added in exports)</b> indicate
-              how much of the economy's exports rely on imported inputs (foreign
-              value added embodied in exports).
-            </li>
-            <li>
-              <b>Forward linkages (Domestic value added in foreign exports)</b>
-              indicate how much of the economy’s domestic value added is used as
-              inputs in other economies’ exports. The overview panel illustrates
-              the direction of value-added flows, while trend charts show how
-              these linkages evolve over time.
-            </li>
-          </ul>
-        </div>
-
-        <div class="pt-3 font-semibold">2) Top 5 GVC sectors</div>
-        <div>
-          This section highlights the <b>five sectors</b> that contribute the
-          most to:
-        </div>
-        <div class="pl-5">
-          <ul class="list-disc">
-            <li>
-              <b>Backward linkages</b> (sectors most dependent on foreign inputs
-              in exports), and
-            </li>
-            <li>
-              <b>Forward linkages</b>
-              (sectors whose value added is most used in foreign exports).
-              Stacked bars show the sector composition; segment labels report
-              values in USD millions/billions.
-            </li>
-          </ul>
-        </div>
-
-        <div class="pt-3 font-semibold">3) Top 5 GVC partners</div>
-        <div>
-          This section highlights the <b>five partner economies</b> that:
-        </div>
-        <div class="pl-5">
-          <ul class="list-disc">
-            <li>
-              contribute the largest foreign value added embodied in the
-              economy’s exports (backward partners), and
-            </li>
-            <li>
-              use the largest domestic value added from the economy in their
-              exports (forward partners).
-            </li>
-          </ul>
-        </div>
-        <div>
-          Stacked bars compare partner composition over time, with values shown
-          in USD millions/billions.
-        </div>
+        <div class="economy-brief-guide" v-html="t('economyBrief.guideHtml')"></div>
       </div>
 
       <FooterMain class="mt-4 lg:mt-20 lg:mb-[-300px]" />
@@ -530,7 +459,7 @@
  * NOTE: Highcharts is assumed global (as in your project).
  */
 
-import VAHeader from "../components/VAHeader.vue";
+import HeaderMain from "../components/Header.vue";
 import VATitle from "../components/VATitle.vue";
 import EcoSelect from "../components/VAEconomySelect.vue";
 import FooterMain from "../components/Footer.vue";
@@ -539,11 +468,13 @@ import axios from "axios";
 import { serverSetup } from "./server.js";
 import { ref, onMounted, nextTick, computed, watch } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
 const { serverData } = serverSetup();
+const { t } = useI18n({ useScope: "global" });
 
 /* =========================
  * UI STATE
@@ -1810,6 +1741,57 @@ const downloadPDF = async () => {
 </script>
 
 <style scoped>
+.country-brief-top-menu {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2147483647 !important;
+}
+
+.economy-brief-guide {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.economy-brief-guide :deep(h2) {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.economy-brief-guide :deep(h3) {
+  margin: 0;
+  padding-top: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.economy-brief-guide :deep(p) {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.economy-brief-guide :deep(ul) {
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 1.25rem;
+  padding-left: 1.25rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  list-style: disc;
+}
+
+.economy-brief-guide :deep(li),
+.economy-brief-guide :deep(strong) {
+  font-size: inherit;
+  line-height: inherit;
+}
+
 /* ✅ ซ่อนแบบย้ายไปนอกจอ แต่ยัง render ได้ */
 .pdf-hidden-area {
   position: fixed;

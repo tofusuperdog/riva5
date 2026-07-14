@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Top exporting sector across years
+      {{ t("backward.charts.topExportingYears") }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -20,10 +20,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("backward.charts.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range or economy selection.
+              {{ t("backward.charts.tryDifferentEconomy") }}
             </div>
           </div>
         </div>
@@ -61,13 +61,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t("backward.charts.preparing") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t("backward.charts.rendering") }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t("backward.charts.patience") }}
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t("backward.charts.viewLess") : t("backward.charts.viewMore") }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -124,6 +124,10 @@ import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateSector } from "../../i18n/sectors";
+
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -161,7 +165,7 @@ const buildYearRange = (s, e) =>
 
 const sectorIDToName = (id) => {
   let res = sectorList.value.filter((d) => Number(d.catID) == Number(id));
-  return res[0].shortname;
+  return translateSector({ catID: id, category: res[0]?.shortname || String(id) }, locale.value);
 };
 
 const shareNum = (num) => Number((Number(num) * 100).toFixed(1));
@@ -223,7 +227,7 @@ function moneyFmt(n) {
   return `$${Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })} million`;
+  })} ${t("backward.charts.million")}`;
 }
 
 const loadSector = async () => {
@@ -285,7 +289,7 @@ const loadData = async () => {
 };
 
 const drawChart = () => {
-  let title = `In which exporting sectors is ${source.value.name}'s value added content most embedded in ${exporting.value.name}'s exports to ${importing.value.name}?`;
+  let title = t("backward.charts.sourceSectorTitle", { source: source.value.name, exporting: exporting.value.name, importing: importing.value.name });
 
   Highcharts.chart("chartBSRangeS01", {
     chart: { type: "spline", backgroundColor: "#fff" },
@@ -300,7 +304,7 @@ const drawChart = () => {
     },
     yAxis: {
       min: 0,
-      title: { text: "Percent of Backward Linkages" },
+      title: { text: t("backward.charts.percentBackward") },
       gridLineColor: "#eee",
       labels: {
         formatter() {
@@ -320,9 +324,9 @@ const drawChart = () => {
       formatter() {
         const p = this.point;
         return `<b>${p.series.name}</b><br/>
-        Year: ${p.year}<br/>
-        Share: ${p.y}% of backward linkages<br/>
-        Value: ${moneyFmt(p.value)}`;
+        ${t("backward.charts.year")}: ${p.year}<br/>
+        ${t("backward.charts.share")}: ${p.y}% ${t("backward.charts.ofBackward")}<br/>
+        ${t("backward.charts.value")}: ${moneyFmt(p.value)}`;
       },
     },
     legend: { align: "center", verticalAlign: "bottom" },
@@ -339,25 +343,17 @@ const genDes = () => {
     let lasty = series.value[i].data[series.value[i].data.length - 1].y;
     let firsty = series.value[i].data[0].y;
     let diff = lasty - firsty;
-    let textdiff = "unchanged";
+    let textdiff = t("backward.charts.unchanged");
     if (diff < 0) {
-      textdiff = "down by " + Math.abs(diff).toFixed(1) + " percentage points";
+      textdiff = t("backward.charts.downBy", { value: Math.abs(diff).toFixed(1) });
     } else if (diff > 0) {
-      textdiff = "up by " + Math.abs(diff).toFixed(1) + " percentage points";
+      textdiff = t("backward.charts.upBy", { value: Math.abs(diff).toFixed(1) });
     }
     desData.value.push({
       sectorName: sectorName,
       color: colorCode[i],
       img: sectorImg,
-      des: `${lasty}% of ${
-        source.value.name
-      }'s value added content embedded in ${
-        exporting.value.name
-      }'s exports to ${
-        importing.value.name
-      } is exported via the ${sectorName.toLowerCase()} sector, ${textdiff} since  ${
-        yearStart.value
-      }.`,
+      des: t("backward.charts.sourceYearDescription", { share: lasty, source: source.value.name, exporting: exporting.value.name, importing: importing.value.name, sector: sectorName.toLowerCase(), change: textdiff, start: yearStart.value }),
     });
   }
 };
@@ -370,6 +366,10 @@ watch(
 
 onMounted(async () => {
   await loadSector();
+  await loadData();
+});
+
+watch(locale, async () => {
   await loadData();
 });
 </script>

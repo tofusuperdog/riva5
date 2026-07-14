@@ -5,7 +5,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Backward linkages in {{ regionName }}
+      {{ t("backward.charts.backwardIn", { region: regionName }) }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
 
@@ -43,13 +43,13 @@
 
               <div class="text-left">
                 <div class="text-base font-semibold">
-                  Preparing the visualization
+                  {{ t("backward.charts.preparing") }}
                 </div>
                 <div class="text-sm text-gray-600 mt-0.5">
-                  Rendering the chart and finalizing the display.
+                  {{ t("backward.charts.rendering") }}
                 </div>
                 <div class="text-xs text-gray-500 mt-3">
-                  Thank you for your patience.
+                  {{ t("backward.charts.patience") }}
                 </div>
               </div>
             </div>
@@ -72,9 +72,12 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { locale, t } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 /* ✅ ผูกกับ props แบบ reactive จริง ๆ */
@@ -115,7 +118,7 @@ const loadEconomyList = async () => {
   const res2 = await axios.get(`${serverData.value}va/get_eco_not_group.php`);
   economyList.value = res2.data.map((d) => ({
     iso: d.iso,
-    name: d.economic,
+    name: translateEconomy({ iso: d.iso, name: d.economic }, locale.value),
     region: d.region,
     area: d.area,
   }));
@@ -248,27 +251,27 @@ const loadData = async () => {
   // ✅ seriesMain เหมือนเดิม แต่ไม่มี drilldown
   seriesMain.value = [
     {
-      name: "Asia-Pacific",
+      name: t("backward.charts.regionAsia"),
       color: "#1F77B4",
       data: genSeriesMain(dataValue["Asia-Pacific"]),
     },
     {
-      name: "Europe",
+      name: t("backward.charts.regionEurope"),
       color: "#FF813D",
       data: genSeriesMain(dataValue["Europe"]),
     },
     {
-      name: "North America",
+      name: t("backward.charts.regionNorthAmerica"),
       color: "#2CA02C",
       data: genSeriesMain(dataValue["North America"]),
     },
     {
-      name: "Latin America",
+      name: t("backward.charts.regionLatinAmerica"),
       color: "#9467BD",
       data: genSeriesMain(dataValue["Latin America"]),
     },
     {
-      name: "Rest of the World",
+      name: t("backward.charts.regionRestWorld"),
       color: "#E377C2",
       data: genSeriesMain(dataValue["Rest of the World"]),
     },
@@ -283,7 +286,7 @@ function moneyFmt(n) {
   return `$${Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })} million`;
+  })} ${t("backward.charts.million")}`;
 }
 function mainTooltipFormatter() {
   const categories = this.series?.chart?.xAxis?.[0]?.categories || [];
@@ -292,21 +295,15 @@ function mainTooltipFormatter() {
     <div style="min-width:220px">
       <div style="font-weight:700;font-size:16px">${country}</div>
       <div style="margin-top:4px">${this.series.name}</div>
-      <div>Share:&nbsp; ${this.y.toFixed(1)}% of gross exports to ${
-    importing.value.name
-  }</div>
-      <div>Value:&nbsp; ${moneyFmt(this.point.value)}</div>
+      <div>${t("backward.charts.share")}:&nbsp; ${this.y.toFixed(1)}%</div>
+      <div>${t("backward.charts.value")}:&nbsp; ${moneyFmt(this.point.value)}</div>
     </div>`;
 }
 
 const drawChart = () => {
-  const title = `Where do ${
-    regionName.value
-  } economies' imported content in exports of ${sector.value.sectorShortName.toLowerCase()} to ${
-    importing.value.name
-  } come from?`;
+  const title = t("backward.charts.regionTitle", { region: regionName.value, sector: sector.value.sectorShortName, importing: importing.value.name });
 
-  const yTitle = `Percent of gross exports to ${importing.value.name}`;
+  const yTitle = t("backward.charts.percentGrossTo", { economy: importing.value.name });
 
   /* ✅ ทำลายกราฟเก่าก่อนวาดใหม่ */
   if (chartInstance) {

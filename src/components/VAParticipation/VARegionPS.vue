@@ -3,7 +3,7 @@
     class="max-w-[1200px] w-[95%] mx-auto bg-white border border-[#DDDDDD] rounded-md mt-4"
   >
     <div class="p-2 text-lg font-bold fblack">
-      Structure of value added in {{ showRegion }}
+      {{ t("participation.structureIn", { region: showRegion }) }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
 
@@ -20,10 +20,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("participation.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -53,10 +53,13 @@ import {
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 // ===== Props / Server =====
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { locale, t } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 // ===== Derive state from props (กัน stale refs) =====
@@ -76,37 +79,37 @@ const VAR_MAP = [
   {
     key: "Intermediate_directly_consumed",
     shortKey: "intermediate",
-    name: "DVA intermediate goods",
+    labelKey: "dvaIntermediate",
     color: "#26C6DA",
   },
   {
     key: "Final_directly_consumed",
     shortKey: "final",
-    name: "DVA final goods",
+    labelKey: "dvaFinal",
     color: "#1E88E5",
   },
   {
     key: "Forward_linkages2",
     shortKey: "forward2",
-    name: "DVA intermediate goods exports back to original exporter",
+    labelKey: "dvaBack",
     color: "#FF8A65",
   },
   {
     key: "Forward_linkages",
     shortKey: "forward",
-    name: "DVA intermediate goods exported to a third economy",
+    labelKey: "dvaThird",
     color: "#EC407A",
   },
   {
     key: "Backward_linkages",
     shortKey: "fva",
-    name: "Foreign Value Added (FVA)",
+    labelKey: "fva",
     color: "#26A69A",
   },
   {
     key: "Double_counted_exports",
     shortKey: "double",
-    name: "Double-counted value",
+    labelKey: "doubleCounted",
     color: "#8E24AA",
   },
 ];
@@ -117,10 +120,12 @@ const money1 = (n) =>
   `$${Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })} million`;
+  })} ${t("participation.million")}`;
 
-const isoToName = (iso) =>
-  economyList.value.find((d) => d.iso === iso)?.name || iso;
+const isoToName = (iso) => {
+  const item = economyList.value.find((d) => d.iso === iso);
+  return item ? translateEconomy(item, locale.value) : iso;
+};
 
 function destroyChart() {
   if (chart) {
@@ -261,7 +266,7 @@ async function loadData() {
           custom: { country: c, valueMn: rec.valueMn || 0 },
         };
       });
-      return { name: cfg.name, color: cfg.color, data };
+      return { name: t(`participation.${cfg.labelKey}`), color: cfg.color, data };
     });
 
     await drawChart(countries, series);
@@ -303,9 +308,7 @@ async function drawChart(categories, series) {
 
   showRegion.value = myRegion;
 
-  const title = `How have ${myRegion} economies' exports of ${String(
-    sector.value.sectorShortName || ""
-  ).toLowerCase()} to ${importing.value.name} produced and utilized?`;
+  const title = t("participation.regionTitle", { region: myRegion, sector: String(sector.value.sectorShortName || "").toLowerCase(), importing: importing.value.name });
 
   // ถ้ามี chart อยู่แล้ว update ได้เลย
   if (chart) {
@@ -315,7 +318,7 @@ async function drawChart(categories, series) {
         xAxis: { categories },
         yAxis: {
           title: {
-            text: `Percent of gross exports to ${importing.value.name}`,
+            text: t("participation.percentGrossTo", { economy: importing.value.name }),
           },
         },
         series,
@@ -337,7 +340,7 @@ async function drawChart(categories, series) {
     yAxis: {
       min: 0,
       max: 100,
-      title: { text: `Percent of gross exports to ${importing.value.name}` },
+      title: { text: t("participation.percentGrossTo", { economy: importing.value.name }) },
       labels: {
         formatter() {
           return this.value + "%";
@@ -354,10 +357,8 @@ async function drawChart(categories, series) {
           <div style="min-width:200px">
             <div style="font-weight:700">${p.custom.country}</div>
             <div>${this.series.name}</div>
-            <div>Share: ${p.y.toFixed(1)}% of gross exports to ${
-          importing.value.name
-        }</div>
-            <div>Value: ${money1(p.custom.valueMn)}</div>
+            <div>${t("participation.share")}: ${p.y.toFixed(1)}% ${t("participation.ofGross")}</div>
+            <div>${t("participation.value")}: ${money1(p.custom.valueMn)}</div>
           </div>`;
       },
     },

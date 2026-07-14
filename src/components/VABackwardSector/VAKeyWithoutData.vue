@@ -3,19 +3,23 @@
     class="max-w-[1200px] w-[95%] mx-auto relative z-100 bg-[#FFFFFF] border-1 border-[#DDDDDD] rounded-md p-2 md:p-4 mt-2 md:mt-4"
   >
     <div class="text-md md:text-lg font-semibold fblack">
-      Key policy questions (select by exporting sector)
+      {{ t("backward.policyTitle") }}
     </div>
     <div class="fsub">
       <ul class="list-disc pl-6">
         <li>
-          Where does economy's imported content used in its exports come from?
+          {{ t("backward.policyQuestionOne") }}
         </li>
-        <li>How does this compare across economies in the same region?</li>
+        <li>{{ t("backward.policyQuestionTwo") }}</li>
       </ul>
     </div>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n({ useScope: "global" });
+</script>
 
 <style lang="scss" scoped></style>

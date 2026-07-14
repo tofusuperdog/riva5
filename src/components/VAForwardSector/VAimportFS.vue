@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Forward linkages by importing economy
+      {{ t('forward.byImporter') }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div class="flex flex-col lg:flex-row">
@@ -17,23 +17,23 @@
         <div class="flex flex-row justify-center pb-2 px-2">
           <div class="flex justify-center items-center">
             <div class="w-3 h-3 bg-[#1F77B4]"></div>
-            <div class="pl-2">Asia-Pacific</div>
+            <div class="pl-2">{{ t('backward.charts.regionAsia') }}</div>
           </div>
           <div class="flex justify-center pl-2 items-center">
             <div class="w-3 h-3 bg-[#FF813D]"></div>
-            <div class="pl-2">Europe</div>
+            <div class="pl-2">{{ t('backward.charts.regionEurope') }}</div>
           </div>
           <div class="flex justify-center pl-2 items-center">
             <div class="w-3 h-3 bg-[#2CA02C]"></div>
-            <div class="pl-2">North America</div>
+            <div class="pl-2">{{ t('backward.charts.regionNorthAmerica') }}</div>
           </div>
           <div class="flex justify-center pl-2 items-center">
             <div class="w-3 h-3 bg-[#9467BD]"></div>
-            <div class="pl-2">Latin America</div>
+            <div class="pl-2">{{ t('backward.charts.regionLatinAmerica') }}</div>
           </div>
           <div class="flex justify-center pl-2 items-center">
             <div class="w-3 h-3 bg-[#E377C2]"></div>
-            <div class="pl-2">Rest of the World</div>
+            <div class="pl-2">{{ t('backward.charts.regionRestWorld') }}</div>
           </div>
         </div>
       </div>
@@ -46,6 +46,8 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from 'vue-i18n';
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -81,9 +83,9 @@ const moneyShort = (n) => {
   let n1 = Number(n);
   const abs = Math.abs(n);
 
-  if (abs >= 1000) return `$${(n1 / 1000).toFixed(1)} billion`;
+  if (abs >= 1000) return `$${(n1 / 1000).toFixed(1)} ${t('forward.billion')}`;
 
-  return `$${n1.toFixed(1)} million`;
+  return `$${n1.toFixed(1)} ${t('forward.million')}`;
 };
 
 const isoToData = (iso) => {
@@ -161,27 +163,27 @@ const loadData = async () => {
   let ParentNodes = [
     {
       id: "Asia-Pacific",
-      name: "Asia-Pacific",
+      name: t('backward.charts.regionAsia'),
       color: "#1F77B4",
     },
     {
       id: "Europe",
-      name: "Europe",
+      name: t('backward.charts.regionEurope'),
       color: "#FF813D",
     },
     {
       id: "North America",
-      name: "North America",
+      name: t('backward.charts.regionNorthAmerica'),
       color: "#2CA02C",
     },
     {
       id: "Latin America",
-      name: "Latin America",
+      name: t('backward.charts.regionLatinAmerica'),
       color: "#9467BD",
     },
     {
       id: "Rest of the World",
-      name: "Rest of the World",
+      name: t('backward.charts.regionRestWorld'),
       color: "#E377C2",
     },
   ];
@@ -204,7 +206,7 @@ const drawChart = (getdata, top5) => {
     chartInstance.destroy();
   }
 
-  let title = `Where does ${exporting.value.name} contribute the most towards export production?`;
+  let title = t('forward.destinationTitle', { exporting: exporting.value.name });
   // top5 = [{ name: 'A', value: 12.3 }, ...] (สูงสุด 5 ตัว)
   const topText = (top5 ?? [])
     .slice(0, 5)
@@ -216,13 +218,13 @@ const drawChart = (getdata, top5) => {
     ? `mainly ${topText}`
     : `no major partner economies identified`;
 
-  let subtitle = `Gross exports of ${exporting.value.name} in ${
-    sector.value.sectorShortName
-  } to World amount to ${moneyShort(gexport.value)} in ${
-    year.value
-  }. Of these exports, ${moneyShort(backValue.value)} is ${
-    exporting.value.name
-  }'s contribution to export production in other economies, ${mainlyText}.`;
+  let subtitle = t('forward.importerSubtitle', {
+    exporting: exporting.value.name,
+    sector: sector.value.sectorShortName,
+    gross: moneyShort(gexport.value),
+    year: year.value,
+    forward: moneyShort(backValue.value),
+  });
 
   chartInstance = Highcharts.chart("chartFSTSingle01", {
     chart: { backgroundColor: "#fff" },
@@ -249,8 +251,8 @@ const drawChart = (getdata, top5) => {
       useHTML: true,
       formatter: function () {
         return ` <div style="font-weight:700">${this.key}</div>
-        <div>Share: ${this.point.sharePct}%</div>
-        <div>Value: ${moneyShort(this.point.valMn)} </div>`;
+        <div>${t('forward.share')}: ${this.point.sharePct}%</div>
+        <div>${t('forward.value')}: ${moneyShort(this.point.valMn)} </div>`;
       },
     },
     legend: {
@@ -280,6 +282,7 @@ watch(
   },
   { immediate: true }
 );
+watch(locale, () => loadData());
 </script>
 
 <style lang="scss" scoped></style>

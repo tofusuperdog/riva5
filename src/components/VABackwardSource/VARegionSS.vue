@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Backward linkages in {{ regionName }} economies
+      {{ t("backward.charts.backwardIn", { region: regionName }) }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
 
@@ -40,13 +40,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t("backward.charts.preparing") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t("backward.charts.rendering") }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t("backward.charts.patience") }}
             </div>
           </div>
         </div>
@@ -73,6 +73,10 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateSector } from "../../i18n/sectors";
+
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -172,8 +176,8 @@ const digit1 = (num) => Number(Number(num).toFixed(2));
 
 function moneyFmt(n) {
   n = Number(n);
-  if (n >= 1000) return `$${(n / 1000).toFixed(1)} billion`;
-  return `$${n.toFixed(1)} million`;
+  if (n >= 1000) return `$${(n / 1000).toFixed(1)} ${t("backward.charts.billion")}`;
+  return `$${n.toFixed(1)} ${t("backward.charts.million")}`;
 }
 
 function mainTooltipFormatter() {
@@ -183,10 +187,8 @@ function mainTooltipFormatter() {
     <div style="min-width:220px">
       <div style="font-weight:700;font-size:16px">${country}</div>
       <div style="margin-top:4px">${this.series.name}</div>
-      <div>Share:&nbsp; ${this.y.toFixed(1)}% of gross exports to ${
-    importing.value?.name || ""
-  }</div>
-      <div>Value:&nbsp; ${moneyFmt(this.point.value)}</div>
+      <div>${t("backward.charts.share")}:&nbsp; ${this.y.toFixed(1)}%</div>
+      <div>${t("backward.charts.value")}:&nbsp; ${moneyFmt(this.point.value)}</div>
     </div>`;
 }
 
@@ -283,7 +285,7 @@ const loadData = async () => {
     return {
       exp_country: d.exp_country,
       sectorID,
-      sectorName: sectorObj?.shortname || String(sectorID),
+      sectorName: translateSector({ catID: sectorID, category: sectorObj?.shortname || String(sectorID) }, locale.value),
       sectorGroup: sectorObj?.sectiongroup || "Unknown",
       value: Number(d.value),
     };
@@ -327,8 +329,8 @@ const loadData = async () => {
 
 // ---------- Graph (ไม่มี drilldown แล้ว) ----------
 const drawChart = () => {
-  const title = `How is ${source.value.name}'s value-added is distributed across the sectoral exports of in ${regionName.value} economies to ${importing.value.name}?`;
-  const yTitle = `Percent of gross exports to ${importing.value.name}`;
+  const title = t("backward.charts.sourceRegionTitle", { source: source.value.name, region: regionName.value, importing: importing.value.name });
+  const yTitle = t("backward.charts.percentGrossTo", { economy: importing.value.name });
 
   if (chartInstance) {
     chartInstance.destroy();
@@ -414,6 +416,10 @@ watch(
     await loadData();
   }
 );
+
+watch(locale, async () => {
+  await loadData();
+});
 </script>
 
 <style lang="scss" scoped></style>

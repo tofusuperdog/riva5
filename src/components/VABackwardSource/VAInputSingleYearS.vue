@@ -6,16 +6,16 @@
       <div class="flex flex-col md:flex-row items-center justify-center">
         <div class="py-2">
           <div class="text-xl md:text-2xl text-semibold">
-            Backward linkages by year
+            {{ t("backward.charts.byYear") }}
           </div>
           <div class="text-sm">
-            View detailed trade linkages for a selected year
+            {{ t("backward.exploreYear") }}
           </div>
         </div>
         <div class="px-6">
           <div class="w-[200px] md:w-[150px]">
             <div style="height: 90px">
-              <div style="font-size: 14px" class="text-white">Year</div>
+              <div style="font-size: 14px" class="text-white">{{ t("backward.year") }}</div>
               <div class="q-pt-xs">
                 <q-select
                   v-model="yearEnd"
@@ -37,6 +37,9 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 // 📌 Connection Database Server Info
 const { serverData } = serverSetup();

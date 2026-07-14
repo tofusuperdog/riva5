@@ -3,29 +3,48 @@
     class="max-w-[1200px] w-[95%] mx-auto relative z-100 bg-[#FFFFFF] border-1 border-[#DDDDDD] rounded-md p-2 md:p-4 mt-2 md:mt-4"
   >
     <div class="text-md md:text-lg font-semibold fblack">
-      Key policy questions
+      {{ t("participation.policyTitle") }}
     </div>
     <div class="fsub">
       <ul class="list-disc pl-6">
         <li>
-          How are an economy's gross exports generated and where are they
-          ultimately used?
+          {{ t("participation.policyOne") }}
         </li>
         <li>
-          How does the economy's trade balance look when measured in value-added
-          terms compared to gross exports?
+          {{ t("participation.policyTwo") }}
         </li>
         <li>
-          What share of this economy's gross exports is attributable to GVCs?
+          {{ t("participation.policyThree") }}
         </li>
       </ul>
     </div>
     <div class="flex justify-center pt-2">
-      <img src="/images/flowchart.svg" alt="" />
+      <div class="aspect-[758/536] w-full max-w-[758px]">
+        <img
+          :src="flowchartSrc"
+          :alt="t('participation.policyTitle')"
+          class="h-full w-full object-contain"
+        />
+      </div>
     </div>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { useI18n } from "vue-i18n";
+import { computed } from "vue";
+
+const { locale, t } = useI18n({ useScope: "global" });
+
+const flowchartSrc = computed(() => {
+  const flowcharts = {
+    "zh-CN": "/images/flowchart-cn.webp",
+    "ru-RU": "/images/flowchart-ru.webp",
+    "fr-FR": "/images/flowchart-fr.webp",
+  };
+
+  return flowcharts[locale.value] || "/images/flowchart.svg";
+});
+</script>
 
 <style lang="scss" scoped></style>

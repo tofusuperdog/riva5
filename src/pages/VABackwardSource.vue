@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col min-h-screen">
     <main class="flex-1">
-      <VAHeader :menu="pageName" class="fixed top-0 left-0 w-full" />
+      <HeaderMain class="backward-source-top-menu" />
       <VATitle
         :menu="pageName"
         class="mt-15"
@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import VAHeader from "../components/VAHeader.vue";
+import HeaderMain from "../components/Header.vue";
 import VATitle from "../components/VATitle.vue";
 import VAContentMainS from "../components/VABackwardSource/VAContentMainS.vue";
 import VAKeyWithoutDataS from "../components/VABackwardSource/VAKeyWithoutDataS.vue";
@@ -103,4 +103,12 @@ const InputSingleYear = (yearInput) => {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.backward-source-top-menu {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2147483647 !important;
+}
+</style>

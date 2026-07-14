@@ -2,7 +2,7 @@
   <div
     class="max-w-[1200px] w-[95%] mx-auto bg-white border border-[#DDDDDD] rounded-md mt-4"
   >
-    <div class="p-2 text-lg font-bold fblack">Value-added breakdown</div>
+    <div class="p-2 text-lg font-bold fblack">{{ t("participation.valueAddedBreakdown") }}</div>
     <div class="border-b border-[#DDDDDD]"></div>
 
     <div
@@ -18,10 +18,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("participation.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -45,6 +45,7 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
 
 // ถ้ายังไม่ได้เปิดใช้โมดูล treemap ให้ import/สมัครโมดูลไว้ที่ entry ของแอป
 // import Highcharts from "highcharts";
@@ -53,6 +54,7 @@ import { serverSetup } from "../../pages/server";
 
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { t } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 /* -------------------- reactive props -------------------- */
@@ -69,28 +71,28 @@ const isAvail = ref(true);
 const VAR_MAP = [
   {
     key: "Intermediate_directly_consumed",
-    name: "DVA intermediate goods",
+    labelKey: "dvaIntermediate",
     color: "#26C6DA",
   },
-  { key: "Final_directly_consumed", name: "DVA final goods", color: "#1E88E5" },
+  { key: "Final_directly_consumed", labelKey: "dvaFinal", color: "#1E88E5" },
   {
     key: "Forward_linkages2",
-    name: "DVA intermediate goods exports back to original exporter",
+    labelKey: "dvaBack",
     color: "#FF8A65",
   },
   {
     key: "Forward_linkages",
-    name: "DVA intermediate goods exported to a third economy",
+    labelKey: "dvaThird",
     color: "#EC407A",
   },
   {
     key: "Backward_linkages",
-    name: "Foreign Value Added (FVA)",
+    labelKey: "fva",
     color: "#26A69A",
   },
   {
     key: "Double_counted_exports",
-    name: "Double-counted value",
+    labelKey: "doubleCounted",
     color: "#8E24AA",
   },
 ];
@@ -102,12 +104,12 @@ const money1 = (n) =>
   `$${Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })} million`;
+  })} ${t("participation.million")}`;
 
 const convertMB = (n) => {
   const num = Number(n || 0);
-  if (num > 1000) return `${(num / 1000).toFixed(1)} billion`;
-  return `${num.toFixed(1)} million`;
+  if (num > 1000) return `${(num / 1000).toFixed(1)} ${t("participation.billion")}`;
+  return `${num.toFixed(1)} ${t("participation.million")}`;
 };
 
 let chart = null;
@@ -204,7 +206,7 @@ async function loadData() {
 function normalizeToTreemap(rows) {
   const byVar = Object.fromEntries((rows || []).map((r) => [r.var, r]));
 
-  return VAR_MAP.map(({ key, name, color }) => {
+  return VAR_MAP.map(({ key, labelKey, color }) => {
     const r = byVar[key] || {};
     const total =
       Number(r.total_exports) || Number(rows?.[0]?.total_exports) || 1;
@@ -215,7 +217,7 @@ function normalizeToTreemap(rows) {
     const valueMn = Number(r.value) || 0;
 
     return {
-      name,
+      name: t(`participation.${labelKey}`),
       color,
       value: Number(sharePct.toFixed(3)), // ใช้ % เป็น weight
       dataLabels: { enabled: true },
@@ -235,9 +237,9 @@ function drawTreemap(data) {
     return `
       <div style="min-width:220px">
         <div style="font-weight:700">${p.name}</div>
-        <div>Year: ${p.custom.year}</div>
-        <div>Share:&nbsp; ${p.custom.share.toFixed(1)}% of gross exports</div>
-        <div>Value:&nbsp; ${money1(p.custom.valueMn)}</div>
+        <div>${t("participation.year")}: ${p.custom.year}</div>
+        <div>${t("participation.share")}:&nbsp; ${p.custom.share.toFixed(1)}% ${t("participation.ofGross")}</div>
+        <div>${t("participation.value")}:&nbsp; ${money1(p.custom.valueMn)}</div>
       </div>
     `;
   };
@@ -249,9 +251,7 @@ function drawTreemap(data) {
     } (${p.custom.share.toFixed(1)}%)</span>`;
   };
 
-  const title = `How have ${exporting.value.name}'s exports of ${String(
-    sector.value?.sectorShortName ?? ""
-  ).toLowerCase()} to ${importing.value.name} been produced and utilized?`;
+  const title = t("participation.productionTitle", { exporting: exporting.value.name, sector: String(sector.value?.sectorShortName ?? "").toLowerCase(), importing: importing.value.name });
 
   const options = {
     chart: { backgroundColor: "#fff" },
@@ -260,11 +260,7 @@ function drawTreemap(data) {
       style: { fontSize: "20px", fontWeight: 600, color: "#333" },
     },
     subtitle: {
-      text: `${exporting.value.name}'s gross exports to ${
-        importing.value.name
-      }: $${convertMB(exportsToimport.value)} | ${
-        exporting.value.name
-      }'s gross exports to World: $${convertMB(exportsToWorld.value)}.`,
+      text: t("participation.exportsSubtitle", { exporting: exporting.value.name, importing: importing.value.name, partnerValue: convertMB(exportsToimport.value), world: t("participation.world"), worldValue: convertMB(exportsToWorld.value) }),
     },
     tooltip: { useHTML: true, formatter: tooltipFormatter },
     legend: { enabled: true },

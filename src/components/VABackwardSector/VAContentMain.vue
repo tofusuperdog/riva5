@@ -27,7 +27,7 @@
         </div> -->
         <div class="flex fwhite px-2 lt-sm">
           <div>
-            <div class="font-semibold">View by</div>
+            <div class="font-semibold">{{ t("backward.viewBy") }}</div>
           </div>
         </div>
 
@@ -35,15 +35,15 @@
           class="px-2 md:px-0 pb-2 text-white flex items-center md:w-[632px] md:mx-auto lg:w-[732px]"
         >
           <div class="gt-xs">
-            <div class="font-semibold">View by</div>
-            <div class="text-xs">Choose your main focus</div>
+            <div class="font-semibold">{{ t("backward.viewBy") }}</div>
+            <div class="text-xs">{{ t("backward.chooseFocus") }}</div>
           </div>
           <div class="w-5"></div>
           <div>
             <q-radio
               v-model="selectType"
               val="Exporting Sector"
-              label="Exporting Sector"
+              :label="t('backward.exportingSector')"
               color="warning"
               dark
               @update:model-value="onChangeRoute"
@@ -54,7 +54,7 @@
             <q-radio
               v-model="selectType"
               val="Source Economy"
-              label="Source Economy"
+              :label="t('backward.sourceEconomy')"
               color="warning"
               dark
               @update:model-value="onChangeRoute"
@@ -68,14 +68,14 @@
         >
           <div class="lg:w-[350px] md:w-[300px]">
             <EcoSelect
-              label="Exporting economy"
+              :label="t('backward.exportingEconomy')"
               :initialValue="exportingISOInit"
               @update:selected="onUpdateExportISO"
             />
           </div>
           <div class="lg:w-[350px] md:w-[300px]">
             <EcoSelect
-              label="Importing economy"
+              :label="t('backward.importingEconomy')"
               :initialValue="importingISOInit"
               @update:selected="onUpdateImportISO"
             />
@@ -86,14 +86,14 @@
         >
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
-              label="Period start"
+              :label="t('backward.periodStart')"
               @update="onUpdateYearStart"
               :initialValue="yearStartInit"
             />
           </div>
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
-              label="Period end"
+              :label="t('backward.periodEnd')"
               @update="onUpdateYearEnd"
               :initialValue="yearEndInit"
             />
@@ -108,23 +108,19 @@
             v-show="isInputApply"
             @click="onClickApply"
           >
-            Apply
+            {{ t("backward.apply") }}
           </div>
           <div
             class="bg-[#fdc20083] fblack h-10 px-4 rounded-sm inline-flex items-center w-full text-center justify-center md:w-[220px]"
             v-show="!isInputApply"
           >
-            Apply
+            {{ t("backward.apply") }}
           </div>
         </div>
         <div class="h-6 text-center text-yellow-300">
-          <span v-show="showError"
-            >The exporting economy cannot be the same as the importing
-            economy.</span
-          >
+          <span v-show="showError">{{ t("backward.sameEconomyError") }}</span>
           <span v-show="showInvalidYear">
-            Period end must be a year after the Period start. Please select a
-            valid range.</span
+            {{ t("backward.yearRangeError") }}</span
           >
         </div>
       </div>
@@ -138,6 +134,9 @@ import { useRouter, useRoute } from "vue-router";
 import { LocalStorage, Notify } from "quasar";
 import { serverSetup } from "../../pages/server";
 import axios from "axios";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
+import { translateSector } from "../../i18n/sectors";
 
 import EcoSelect from "../VAEconomySelect.vue";
 import yearSelect from "../VAYearSelect.vue";
@@ -146,6 +145,7 @@ import sectorSelect from "../VASectorSelect.vue";
 // 🧭 Routing
 const router = useRouter();
 const route = useRoute();
+const { locale, t } = useI18n({ useScope: "global" });
 
 // 📌 Select type: Single Year / Time Range
 
@@ -360,15 +360,14 @@ const onClickApply = async () => {
   }
   if (checkYearPass === 1) {
     alert(
-      `Limited data available\n\n` +
-        `${inputData.value.exporting.name} - ${inputData.value.importing.name} is available only for ${yearRangeShow[0]}–${yearRangeShow[1]}.\n` +
-        `Please adjust Period start/end within this range and apply again.`
+      `${t("backward.limitedData")}\n\n` +
+        `${t("backward.availability", { exporting: inputData.value.exporting.name, importing: inputData.value.importing.name, start: yearRangeShow[0], end: yearRangeShow[1] })}\n` +
+        t("backward.adjustPeriod")
     );
     return;
   }
   Notify.create({
-    message:
-      "Your changes have been applied. Scroll down to review the results.",
+    message: t("backward.applied"),
     color: "positive",
     position: "center",
     timeout: 2000,
@@ -385,7 +384,7 @@ const loadEconomyList = async () => {
     const res = await axios.get(url);
     economyList.value = res.data.map((data) => ({
       id: data.id,
-      label: data.name,
+      label: translateEconomy(data, locale.value, data.name === "Economy Groups" ? 1 : 0),
       value: data.iso,
       disable: data.disable,
     }));
@@ -403,9 +402,9 @@ const loadSectorList = async () => {
     );
     const res = await axios.get(url);
     sectorList.value = res.data.map((data) => ({
-      sectorName: data.category,
+      sectorName: translateSector(data, locale.value),
       sectorID: data.catID,
-      sectorShortName: data.shortname,
+      sectorShortName: translateSector(data, locale.value),
       sectorGroup: data.sectiongroup,
     }));
   } catch (err) {

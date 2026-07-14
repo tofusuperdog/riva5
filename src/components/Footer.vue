@@ -1,10 +1,8 @@
 <template>
   <div class="bg-[#021527]">
     <div class="bg-[#072743]">
-      <div
-        class="bg-[#072743] h-[45px] md:h-[60px] flex justify-between gap-6 items-center px-4 max-w-[1400px] mx-auto"
-      >
-        <div class="flex gap-2 md:gap-4 items-center">
+      <div class="footer-partners-bar bg-[#072743] max-w-[1400px] mx-auto">
+        <div class="footer-partners">
           <div class="pt-1 cursor-pointer" @click="goToFealac">
             <img src="/images/fealacLogo.svg" alt="" class="h-7 md:h-9" />
           </div>
@@ -15,8 +13,8 @@
             <img src="/images/adbLogo.svg" alt="" class="h-7 md:h-9" />
           </div>
         </div>
-        <div class="fwhite cursor-pointer md:text-lg" @click="openTerms()">
-          Term of use
+        <div class="footer-terms fwhite cursor-pointer md:text-lg" @click="openTerms()">
+          {{ t('footer.terms') }}
         </div>
       </div>
     </div>
@@ -24,11 +22,9 @@
       class="bg-[#021527] px-4 py-2 flex flex-col md:flex-row justify-between lg:gap-32 md:gap-8 gap-2 max-w-[1400px] mx-auto"
     >
       <div class="fwhitesub order-2 md:order-1 md:flex-1">
-        <div class="font-bold text-sm">DISCLAIMER:</div>
+        <div class="font-bold text-sm">{{ t('footer.disclaimerTitle') }}</div>
         <div class="text-xs">
-          RIVA is powered by the Trade, Investment and Innovation Division of
-          the United Nations Economic and Social Commission for Asia and the
-          Pacific. For questions, please contact us at escap-tiid@un.org.
+          {{ t('footer.disclaimer', { email: 'escap-tiid@un.org' }) }}
         </div>
       </div>
       <!-- <div class="fwhite order-1 py-1 md:order-2 max-w-[600px] md:flex-1">
@@ -93,7 +89,7 @@
       <q-card class="fblack p-4 max-w-xl">
         <div class="flex justify-between items-center">
           <div class="text-xl text-bold flex items-center gap-2">
-            <q-icon name="gavel" /> Terms of Use
+            <q-icon name="gavel" /> {{ t('footer.terms') }}
           </div>
           <q-icon
             name="close"
@@ -107,15 +103,12 @@
 
         <div class="text-sm">
           <p class="mb-4">
-            All users may publish information taken directly from, or derived
-            from, the platform under the following conditions:
+            {{ t('footer.termsIntro') }}
           </p>
 
           <ul class="list-disc pl-6 space-y-2">
             <li>
-              The platform is acknowledged, cited as
-              <strong>ESCAP RIVA</strong>, accessed (e.g., September 2025), and
-              available at
+              {{ t('footer.termsOne') }}
               <a
                 href="https://riva.negotiatetrade.org"
                 target="_blank"
@@ -125,26 +118,20 @@
               >.
             </li>
             <li>
-              Any conclusions or analyses based on the data and visualizations
-              provided must be accompanied by a disclaimer stating that they are
-              the responsibility of the authors and do not necessarily reflect
-              the views of the United Nations.
+              {{ t('footer.termsTwo') }}
             </li>
             <li>
-              Any re-dissemination of the data by third parties — based on
-              downloaded content — which goes beyond the scope of analytical
-              publication must receive prior approval from the United Nations
-              Secretariat.
+              {{ t('footer.termsThree') }}
             </li>
           </ul>
 
           <div class="mt-4 text-sm">
-            <p class="mb-1 text-bold">Requests can be sent to:</p>
+            <p class="mb-1 text-bold">{{ t('footer.requests') }}</p>
             <p>
-              Trade, Investment and Innovation Division<br />
+              {{ t('footer.division') }}<br />
 
-              United Nations ESCAP<br />
-              Email:
+              {{ t('footer.unEscap') }}<br />
+              {{ t('footer.email') }}
               <a href="mailto:escap-tiid@un.org" class="text-primary underline"
                 >escap-tiid@un.org</a
               >
@@ -158,6 +145,8 @@
 
 <script setup>
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 const isTermsOpen = ref(false);
 
 const openTerms = () => {
@@ -168,4 +157,52 @@ const goToFealac = () => {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.footer-partners-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  gap: 1.5rem;
+  padding: 0 1rem;
+}
+
+.footer-partners {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-terms {
+  transition: color 0.2s ease;
+}
+
+.footer-terms:hover {
+  color: #fdc300;
+}
+
+@media (max-width: 767px) {
+  .footer-partners-bar {
+    display: block;
+    height: auto;
+    padding: 0;
+  }
+
+  .footer-partners {
+    justify-content: center;
+    gap: 1rem;
+    min-height: 48px;
+    padding: 0.45rem 1rem;
+  }
+
+  .footer-terms {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    background: #0b3656;
+    padding: 0.55rem 1rem;
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-align: center;
+  }
+}
+</style>

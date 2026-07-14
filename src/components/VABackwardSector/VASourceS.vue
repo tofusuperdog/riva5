@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Backward linkages by source economy
+      {{ t("backward.charts.bySource") }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -20,10 +20,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("backward.charts.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -61,13 +61,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t("backward.charts.preparing") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t("backward.charts.rendering") }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t("backward.charts.patience") }}
             </div>
           </div>
         </div>
@@ -114,10 +114,19 @@ import { ref, onMounted, watch, computed, toRef } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { locale, t } = useI18n({ useScope: "global" });
+const economyName = (row) => translateEconomy({ iso: row.source_country, name: row.economic }, locale.value);
+const regionName = (area) => ({
+  "Asia-Pacific": t("backward.charts.regionAsia"), Europe: t("backward.charts.regionEurope"),
+  "North America": t("backward.charts.regionNorthAmerica"), "Latin America": t("backward.charts.regionLatinAmerica"),
+  "Rest of the World": t("backward.charts.regionRestWorld"),
+}[area] || area);
 const $q = useQuasar();
 
 // ===== input from parent component =====
@@ -149,9 +158,9 @@ const AREA_COLOR = {
 const moneyNum = (num) => {
   num = Number(num);
   if (num < 1000) {
-    return "USD " + num.toFixed(1) + " million";
+    return "USD " + num.toFixed(1) + " " + t("backward.charts.million");
   } else {
-    return "USD " + (num / 1000).toFixed(1) + " billion";
+    return "USD " + (num / 1000).toFixed(1) + " " + t("backward.charts.billion");
   }
 };
 
@@ -206,12 +215,12 @@ const loadData = async () => {
   ];
   const parentNodes = areas.map((a) => ({
     id: a,
-    name: a,
+    name: regionName(a),
     color: AREA_COLOR[a] || "#999",
   }));
 
   const countryNodes = rawAll.map((d) => ({
-    name: `${d.economic}`,
+    name: economyName(d),
     parent: d.area,
     value: +(Number(d.share) * 100).toFixed(1), // ขนาดพื้นที่ (เปอร์เซ็นต์)
     sharePct: +(Number(d.share) * 100).toFixed(1), // เก็บไว้โชว์ใน label/tooltip
@@ -223,11 +232,7 @@ const loadData = async () => {
 };
 
 const drawChart = (countryNodes, parentNodes, areas) => {
-  let title = `Where does ${
-    exporting.value.name
-  }'s Foreign Value Added (FVA) in exports of ${sector.value.sectorShortName.toLowerCase()} to ${
-    importing.value.name
-  } come from?`;
+  const title = t("backward.charts.sourceTitle", { exporting: exporting.value.name, sector: sector.value.sectorShortName, importing: importing.value.name });
 
   let getdata = [];
   getdata.push(...parentNodes);
@@ -254,33 +259,23 @@ const drawChart = (countryNodes, parentNodes, areas) => {
     totalsByParent.value[k] = Number(totalsByParent.value[k].toFixed(1));
   });
 
-  let subtitle = `Gross exports of ${
-    exporting.value.name
-  } in ${sector.value.sectorShortName.toLowerCase()} to ${
-    importing.value.name
-  } amounted to ${moneyNum(gexport.value)} in ${
-    year.value
-  }. Of these exports, ${moneyNum(
-    backValue.value
-  )} is foreign value added sourced from other economies. By region, Asia-Pacific accounts for ${
-    totalsByParent.value["Asia-Pacific"]
-  }% of ${exporting.value.name}'s FVA, followed by Europe (${
-    totalsByParent.value["Europe"]
-  }%), North America (${
-    totalsByParent.value["North America"]
-  }%), Latin America (${
-    totalsByParent.value["Latin America"]
-  }%), and the Rest of the World (${
-    totalsByParent.value["Rest of the World"]
-  }%). At the country level, the largest contributors are the ${
-    top5.value[0].economic
-  } (${shareNum(top5.value[0].share)}%), ${top5.value[1].economic} (${shareNum(
-    top5.value[1].share
-  )}%), ${top5.value[2].economic} (${shareNum(top5.value[2].share)}%), ${
-    top5.value[3].economic
-  } (${shareNum(top5.value[3].share)}%) and ${
-    top5.value[4].economic
-  } (${shareNum(top5.value[4].share)}%).`;
+  const contributors = top5.value
+    .map((row) => `${economyName(row)} (${shareNum(row.share)}%)`)
+    .join(", ");
+  const subtitle = t("backward.charts.sourceSubtitle", {
+    exporting: exporting.value.name,
+    sector: sector.value.sectorShortName,
+    importing: importing.value.name,
+    gross: moneyNum(gexport.value),
+    year: year.value,
+    fva: moneyNum(backValue.value),
+    asia: totalsByParent.value["Asia-Pacific"],
+    europe: totalsByParent.value["Europe"],
+    northAmerica: totalsByParent.value["North America"],
+    latinAmerica: totalsByParent.value["Latin America"],
+    restWorld: totalsByParent.value["Rest of the World"],
+    contributors,
+  });
 
   // ✅ ลบกราฟเดิมก่อนวาดใหม่
   if (chartInstance) {
@@ -291,7 +286,7 @@ const drawChart = (countryNodes, parentNodes, areas) => {
   // ⬇️ สร้างซีรีส์ปลอมสำหรับ legend ตามโซน
   const legendSeries = areas.map((a) => ({
     type: "scatter",
-    name: a,
+    name: regionName(a),
     color: AREA_COLOR[a] || "#999",
     data: [], // ไม่มีจุดจริง
     showInLegend: true,
@@ -323,8 +318,8 @@ const drawChart = (countryNodes, parentNodes, areas) => {
       useHTML: true,
       formatter: function () {
         return ` <div style="font-weight:700">${this.key}</div>
-        <div>Share: ${this.point.sharePct}%</div>
-        <div>Value: $${this.point.valMn} million</div>`;
+        <div>${t("backward.charts.share")}: ${this.point.sharePct}%</div>
+        <div>${t("backward.charts.value")}: $${this.point.valMn} ${t("backward.charts.million")}</div>`;
       },
     },
     legend: {

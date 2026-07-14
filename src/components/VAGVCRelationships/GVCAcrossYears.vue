@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-left pl-4 text-lg text-bold fblack">
-      GVC Overview Across Years
+      {{ t('gvc.acrossYears') }}
     </div>
     <div class="h-1 border-b-1 border-b-[#DDDDDD]"></div>
 
@@ -19,7 +19,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t('gvc.viewLess') : t('gvc.viewMore') }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -33,11 +33,11 @@
           <div class="flex items-center">
             <div><img src="/images/vaBackwardG.svg" /></div>
             <div class="backwardC text-2xl pl-2 font-medium">
-              Backward Linkages
+              {{ t('gvc.backward') }}
             </div>
           </div>
           <div class="backwardC">
-            Foreign value added (FVA) in {{ countryName }}'s exports
+            {{ t('gvc.fvaExports', { economy: countryName }) }}
           </div>
           <div class="fsub">
             {{ desBackward }}
@@ -45,11 +45,11 @@
           <div class="flex items-center pt-4">
             <div><img src="/images/vaForwardG.svg" /></div>
             <div class="forwardC text-2xl pl-2 font-medium">
-              Forward Linkages
+              {{ t('gvc.forward') }}
             </div>
           </div>
           <div class="forwardC">
-            {{ countryName }}'s value added (DVA) in exports
+            {{ t('gvc.dvaExports', { economy: countryName }) }}
           </div>
           <div class="fsub">
             {{ desForward }}
@@ -61,9 +61,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 import { serverSetup } from "../../pages/server";
 
@@ -74,12 +76,15 @@ const props = defineProps({
 
 // Quasar screen-helper
 const $q = useQuasar();
+const { t, locale } = useI18n({ useScope: "global" });
 
 // ข้อมูลเซิร์ฟเวอร์
 const { serverData } = serverSetup();
 
 // เก็บชื่อประเทศ / ปี
-const countryName = props.inputData.exporting.name;
+const countryName = computed(() =>
+  translateEconomy(props.inputData.exporting, locale.value)
+);
 const yearStart = ref(props.inputData.yearStart);
 const yearEnd = ref(props.inputData.yearEnd);
 
@@ -101,9 +106,9 @@ const desForward = ref("");
 function formatValue(num) {
   const n = Number(num);
   if (n < 1000) {
-    return `$${n.toFixed(1)} million`;
+    return `$${n.toFixed(1)} ${t('gvc.million')}`;
   } else {
-    return `$${(n / 1000).toFixed(1)} billion`;
+    return `$${(n / 1000).toFixed(1)} ${t('gvc.billion')}`;
   }
 }
 
@@ -160,7 +165,7 @@ const getRawResult = async () => {
 
 // plot graph
 const plotGraph = () => {
-  let chartTitle = `How have ${countryName}'s GVCs linkages evolved over the years?`;
+  let chartTitle = t('gvc.chartYearsTitle', { economy: countryName.value });
   let chart = null;
   chart = Highcharts.chart("chartGVCRange01", {
     chart: {
@@ -175,7 +180,7 @@ const plotGraph = () => {
       gridLineWidth: 0,
     },
     yAxis: {
-      title: { text: `Percent of ${countryName}'s Gross exports` },
+      title: { text: t('gvc.percentGross', { economy: countryName.value }) },
       labels: { format: "{value}%" },
     },
     tooltip: {
@@ -185,18 +190,18 @@ const plotGraph = () => {
         if (this.point.value < 1000) {
           // แสดงเป็น million
           displayValue = this.point.value.toFixed(1);
-          unit = "million";
+          unit = t('gvc.million');
         } else {
           // แสดงเป็น billion
           displayValue = (this.point.value / 1000).toFixed(1);
-          unit = "billion";
+          unit = t('gvc.billion');
         }
 
         return `
       <b>${this.series.name}</b><br/>
-      Year: ${this.point.year}<br/>
-      Share: ${(this.point.share * 100).toFixed(1)}% of gross exports<br/>
-      Value: $${displayValue} ${unit}
+      ${t('gvc.year')}: ${this.point.year}<br/>
+      ${t('gvc.share')}: ${(this.point.share * 100).toFixed(1)}% ${t('gvc.ofGross')}<br/>
+      ${t('gvc.value')}: $${displayValue} ${unit}
     `;
       },
     },
@@ -207,8 +212,8 @@ const plotGraph = () => {
     },
     colors: ["#2ecc71", "#3498db"],
     series: [
-      { name: "Backward Linkages", data: graphBackward.value },
-      { name: "Forward Linkages", data: graphForward.value },
+      { name: t('gvc.backward'), data: graphBackward.value },
+      { name: t('gvc.forward'), data: graphForward.value },
     ],
     credits: { enabled: false },
   });
@@ -222,23 +227,17 @@ const desGraph = () => {
   const prevBackward = graphBackward.value[0];
   const shareNowB = Number((lastBackward.share * 100).toFixed(1));
   const sharePrevB = Number((prevBackward.share * 100).toFixed(1));
-  const directionB = shareNowB > sharePrevB ? "up" : "down";
+  const directionB = t(shareNowB > sharePrevB ? 'gvc.increased' : 'gvc.decreased');
 
-  desBackward.value = `In ${lastYear}, ${shareNowB}% of ${countryName}'s gross exports embedded FVA from aboard - ${directionB} from
-  ${sharePrevB}%
-
-  in ${firstYear}.`;
+  desBackward.value = t('gvc.backwardYearDescription', { lastYear, current: shareNowB, economy: countryName.value, direction: directionB, previous: sharePrevB, firstYear });
 
   const lastForward = graphForward.value[graphForward.value.length - 1];
   const prevForward = graphForward.value[0];
   const shareNowF = Number((lastForward.share * 100).toFixed(1));
   const sharePrevF = Number((prevForward.share * 100).toFixed(1));
-  const directionF = shareNowF > sharePrevF ? "increased" : "decreased";
+  const directionF = t(shareNowF > sharePrevF ? 'gvc.increased' : 'gvc.decreased');
 
-  desForward.value = `In ${lastYear}, ${countryName}'s DVA was ${shareNowF}% of ${countryName}'s gross exports, which ${directionF} from
-  ${sharePrevF}%
-
-  in ${firstYear}.`;
+  desForward.value = t('gvc.forwardYearDescription', { lastYear, economy: countryName.value, current: shareNowF, direction: directionF, previous: sharePrevF, firstYear });
 };
 
 // อัปเดตอัตโนมัติเมื่อขนาดจอเปลี่ยน

@@ -8,13 +8,21 @@ const routes = [
     component: () => import("src/pages/VADashboard.vue"),
   },
   {
+    path: "/sectoral-analysis/health",
+    component: () => import("src/pages/HealthSector.vue"),
+  },
+  {
+    path: "/about",
+    component: () => import("src/pages/About.vue"),
+  },
+  {
     path: "/participationingvcs/:exp?/:imp?/:yearStart?/:yearEnd?/:sector?",
     component: () => import("src/pages/VAParticipationInGVCs.vue"),
   },
 
   {
     path: "/gvcoverview/:exp?/:yearStart?/:yearEnd?",
-    component: () => import("src/pages/VAGVCrelationships.vue"),
+    component: () => import("src/pages/VAGVCRelationships.vue"),
   },
   {
     path: "/backwardlinkages/:exp?/:imp?/:yearStart?/:yearEnd?/:sector?",
@@ -40,60 +48,6 @@ const routes = [
   {
     path: "/countrybriefs/:exp?",
     component: () => import("src/pages/VAEconomyBrief.vue"),
-  },
-
-  // RI Page
-  {
-    path: "/rioverview",
-    component: () => import("pages/ri_overview.vue"),
-  },
-  {
-    path: "/riintragroup",
-    component: () => import("pages/ri_intraGroup.vue"),
-    name: "riintragroup",
-  },
-  {
-    path: "/riecopartner/:key?",
-    component: () => import("pages/ri_ecopartner.vue"),
-    name: "rieconomypartner",
-  },
-  {
-    path: "/riecopartner_clear",
-    component: () => import("pages/ri_ecopartner.vue"),
-    name: "rieconomypartner_clear",
-  },
-  {
-    path: "/ribuildyourown",
-    component: () => import("pages/ri_buildYourOwn.vue"),
-    name: "ribuildyourown",
-  },
-  {
-    path: "/ribuildyourown_clear",
-    component: () => import("pages/ri_buildYourOwn.vue"),
-    name: "ribuildyourown_clear",
-  },
-  {
-    path: "/ridownload",
-    component: () => import("pages/ri_download.vue"),
-  },
-  {
-    path: "/reloadpage/:page",
-    component: () => import("pages/ri_reloadpage.vue"),
-    name: "reloadpage",
-  },
-  {
-    path: "/ridataavail/:key?",
-    component: () => import("pages/ri_dataAvail.vue"),
-  },
-  {
-    path: "/ricountrybrief",
-    component: () => import("pages/ri_countrybrief.vue"),
-    name: "ricountrybrief",
-  },
-  {
-    path: "/ricountrybrief2/:iso",
-    component: () => import("pages/ri_countrybrief2.vue"),
-    name: "ricountrybrief2",
   },
 
   // Always leave this as last one,v

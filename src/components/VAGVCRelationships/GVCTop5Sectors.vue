@@ -3,7 +3,7 @@
     class="max-w-[1200px] w-[95%] mx-auto relative z-100 border-1 bg-white border-[#DDDDDD] rounded-md mt-2 md:mt-4 pb-2 md:pb-4"
   >
     <div class="p-2 text-left pl-4 text-lg text-bold fblack">
-      Top 5 GVC sectors across periods
+      {{ t('gvc.topSectorsPeriods') }}
     </div>
     <div class="h-1 border-b-1 border-b-[#DDDDDD]"></div>
 
@@ -25,16 +25,20 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useQuasar } from "quasar";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateSector } from "../../i18n/sectors";
+import { translateEconomy } from "../../i18n/economies";
 
 // ===== props / server =====
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
 const $q = useQuasar();
+const { t, locale } = useI18n({ useScope: "global" });
 
 // ===== input from parent component =====
 const yearStart = Number(props.inputData.yearStart);
 const yearEnd = Number(props.inputData.yearEnd);
-const countryName = props.inputData.exporting.name;
+const countryName = translateEconomy(props.inputData.exporting, locale.value);
 
 // ===== state =====
 const periods = ref({ p1Years: [], p2Years: [], p1Label: "", p2Label: "" });
@@ -226,15 +230,7 @@ function buildSubtitle({
     (Number(totalsBySectorP1[String(topP2?.k)] || 0) / totalLinkP1) * 100;
   const directionShare = shareTopP2 - shareTopP1 > 0 ? "up" : "down";
 
-  return `Between ${p2Label}, ${country}’s ${linkType} (${fmtB(
-    totalLinkP2
-  )}) represented ${fmtPct(
-    shareGrossP2
-  )} of total gross exports. ${topName} represented ${fmtPct(
-    shareTopP2
-  )} of ${country}’s ${linkType}, ${directionShare} from ${fmtPct(
-    shareTopP1
-  )} in ${p1Label}.`;
+  return t('gvc.chartPeriodsTitle', { economy: country });
 }
 
 // ----- Plot common options
@@ -260,7 +256,7 @@ function makeCommonOptions({
     },
     yAxis: {
       min: 0,
-      title: { text: "USD Billion" },
+      title: { text: t('gvc.usdBillion') },
       reversedStacks: false,
     },
     legend: {
@@ -292,8 +288,8 @@ function makeCommonOptions({
         const period = this.point?.period ?? this.point?.category ?? "";
         const val = (this.y ?? 0).toFixed(1);
         // ใช้ share ที่คำนวณไว้ใน point เพื่อบอกว่าเป็น % ของ backward/forward
-        const shareText = `${(this.point?.share ?? 0).toFixed(1)}% of ${kind}`;
-        return `<b>${this.series.name}</b><br/>Period: ${period}<br/>Share: ${shareText}<br/>Value: $${val} billion`;
+        const shareText = `${(this.point?.share ?? 0).toFixed(1)}% ${kind}`;
+        return `<b>${this.series.name}</b><br/>${t('gvc.period')}: ${period}<br/>${t('gvc.share')}: ${shareText}<br/>${t('gvc.value')}: $${val} ${t('gvc.billion')}`;
       },
     },
     series,
@@ -320,7 +316,7 @@ async function loadTop5AcrossPeriods() {
     axios.get(urlSector).then((r) => r.data),
   ]);
   const sectorMap = new Map(
-    sectorRows.map((s) => [String(s.catID), s.shortname])
+    sectorRows.map((s) => [String(s.catID), translateSector({ catID: s.catID, category: s.shortname || s.category }, locale.value)])
   );
 
   // แตกเป็น Backward / Forward
@@ -404,12 +400,12 @@ async function loadTop5AcrossPeriods() {
     Highcharts.chart(
       "chartTop5Back",
       makeCommonOptions({
-        title: "Backward Linkages",
+        title: t('gvc.backward'),
         titleColor: "#56A13F",
         subtitle,
         categories: cats,
         series,
-        kind: "backward linkages",
+        kind: t('gvc.backward'),
       })
     );
   }
@@ -440,12 +436,12 @@ async function loadTop5AcrossPeriods() {
     Highcharts.chart(
       "chartTop5Forward",
       makeCommonOptions({
-        title: "Forward Linkages",
+        title: t('gvc.forward'),
         titleColor: "#4BAEED", // << สีฟ้า
         subtitle,
         categories: cats,
         series,
-        kind: "forward linkages",
+        kind: t('gvc.forward'),
       })
     );
   }

@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Forward linkages in {{ regionName }} economies
+      {{ t('forward.inRegion', { region: regionName }) }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div class="flex flex-col lg:flex-row">
@@ -24,6 +24,8 @@ import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from 'vue-i18n';
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -178,27 +180,27 @@ const loadData = async () => {
 
   seriesMain.value = [
     {
-      name: "Asia-Pacific",
+      name: t('backward.charts.regionAsia'),
       color: "#1F77B4",
       data: genSeriesMain(rawAll, "Asia-Pacific"),
     },
     {
-      name: "Europe",
+      name: t('backward.charts.regionEurope'),
       color: "#FF813D",
       data: genSeriesMain(rawAll, "Europe"),
     },
     {
-      name: "North America",
+      name: t('backward.charts.regionNorthAmerica'),
       color: "#2CA02C",
       data: genSeriesMain(rawAll, "North America"),
     },
     {
-      name: "Latin America",
+      name: t('backward.charts.regionLatinAmerica'),
       color: "#9467BD",
       data: genSeriesMain(rawAll, "Latin America"),
     },
     {
-      name: "Rest of the World",
+      name: t('backward.charts.regionRestWorld'),
       color: "#E377C2",
       data: genSeriesMain(rawAll, "Rest of the World"),
     },
@@ -249,8 +251,8 @@ const loadData = async () => {
 
 function moneyFmt(n) {
   n = Number(n);
-  if (n >= 1000) return `$${(n / 1000).toFixed(1)} billion`;
-  return `$${n.toFixed(1)} million`;
+  if (n >= 1000) return `$${(n / 1000).toFixed(1)} ${t('forward.billion')}`;
+  return `$${n.toFixed(1)} ${t('forward.million')}`;
 }
 
 function mainTooltipFormatter() {
@@ -260,27 +262,24 @@ function mainTooltipFormatter() {
     <div style="min-width:220px">
       <div style="font-weight:700;font-size:16px">${country}</div>
       <div style="margin-top:4px">${this.series.name}</div>
-      <div>Share:&nbsp; ${this.y.toFixed(1)}% of gross exports to world
+      <div>${t('forward.share')}:&nbsp; ${this.y.toFixed(1)}%
   </div>
-      <div>Value:&nbsp; ${moneyFmt(this.point.value)}</div>
+      <div>${t('forward.value')}:&nbsp; ${moneyFmt(this.point.value)}</div>
     </div>`;
 }
 function pieTooltipFormatter() {
   return `
     <div style="min-width:200px">
       <div style="font-weight:700">${this.point.name}</div>
-      <div>Share:&nbsp; ${this.y.toFixed(2)}%</div>
-      <div>Value:&nbsp; ${moneyFmt(this.point.value)}</div>
+      <div>${t('forward.share')}:&nbsp; ${this.y.toFixed(2)}%</div>
+      <div>${t('forward.value')}:&nbsp; ${moneyFmt(this.point.value)}</div>
     </div>`;
 }
 
 const drawChart = () => {
-  const title = `Where do ${
-    regionName.value
-  } economies contribute the most towards export production (${sector.value.sectorShortName.toLowerCase()})?`;
-  const yTitle = `Percent of gross exports to world`;
-  const mainSubtitleText =
-    "Click on a bar to see the individual economies associated with a region";
+  const title = t('forward.regionDestinationTitle', { region: regionName.value, sector: sector.value.sectorShortName.toLowerCase() });
+  const yTitle = t('forward.percentGrossTo', { economy: t('forward.world') });
+  const mainSubtitleText = t('forward.clickBar');
 
   /* ✅ ทำลายกราฟเก่าก่อนวาดใหม่ */
   if (chartInstance) {
@@ -315,7 +314,7 @@ const drawChart = () => {
           const categories = this.xAxis[0].categories || [];
           const country = e.point?.category ?? categories[e.point.x];
           this.setTitle({
-            text: `Where does ${country} contribute the most towards export production (${sector.value.sectorShortName.toLowerCase()})?`,
+            text: t('forward.countryDestinationTitle', { country, sector: sector.value.sectorShortName.toLowerCase() }),
           });
         },
         drillup() {
@@ -398,6 +397,7 @@ onMounted(async () => {
   await loadEconomyList();
   await loadData();
 });
+watch(locale, () => loadData());
 </script>
 
 <style lang="scss" scoped></style>

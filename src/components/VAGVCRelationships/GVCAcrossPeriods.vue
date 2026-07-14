@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-left pl-4 text-lg text-bold fblack">
-      GVC overview across periods
+      {{ t('gvc.acrossPeriods') }}
     </div>
     <div class="h-1 border-b-1 border-b-[#DDDDDD]"></div>
 
@@ -19,7 +19,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t('gvc.viewLess') : t('gvc.viewMore') }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -34,22 +34,22 @@
           <div class="flex items-center">
             <img src="/images/vaBackwardG.svg" />
             <div class="backwardC text-2xl pl-2 font-medium">
-              Backward Linkages
+              {{ t('gvc.backward') }}
             </div>
           </div>
           <div class="backwardC">
-            Foreign value added in {{ countryName }}'s exports
+            {{ t('gvc.fvaExports', { economy: countryName }) }}
           </div>
           <div class="fsub">{{ desBackward }}</div>
 
           <div class="flex items-center pt-4">
             <img src="/images/vaForwardG.svg" />
             <div class="forwardC text-2xl pl-2 font-medium">
-              Forward Linkages
+              {{ t('gvc.forward') }}
             </div>
           </div>
           <div class="forwardC">
-            {{ countryName }}'s value added in foreign exports
+            {{ t('gvc.dvaForeignExports', { economy: countryName }) }}
           </div>
           <div class="fsub">{{ desForward }}</div>
         </div>
@@ -63,14 +63,17 @@ import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
 const $q = useQuasar();
+const { t, locale } = useI18n({ useScope: "global" });
 
 // ===== Basic state =====
-const countryName = props.inputData.exporting.name;
+const countryName = translateEconomy(props.inputData.exporting, locale.value);
 const yearStart = Number(props.inputData.yearStart);
 const yearEnd = Number(props.inputData.yearEnd);
 const showDetail = ref($q.screen.gt.sm);
@@ -168,10 +171,10 @@ function sumPeriod(yearMap, periodYears) {
 function buildDesc(linkName, data) {
   const [p1Share, p2Share] = data.share;
   const [p1ValB, p2ValB] = data.valB;
-  const trend = p1Share > p2Share ? "decrease" : "increase";
+  const trend = t(p1Share > p2Share ? 'gvc.decreased' : 'gvc.increased');
   const delta = p1Share === 0 ? 0 : ((p2Share - p1Share) / p1Share) * 100;
   const deltaTxt = `${delta >= 0 ? "+" : ""}${Math.abs(delta).toFixed(2)}%`;
-  return `Between ${labels.value[0]} and ${labels.value[1]}, the share of ${linkName} in ${countryName}'s gross exports ${trend} from ${p1Share}% to ${p2Share}%, equivalent to $${p1ValB}B and $${p2ValB}B respectively.`;
+  return t('gvc.periodDescription', { first: labels.value[0], second: labels.value[1], linkage: linkName, economy: countryName, direction: trend, firstShare: p1Share, secondShare: p2Share, firstValue: p1ValB, secondValue: p2ValB });
 }
 
 // วาดกราฟ Overlapped (Gross เป็นพื้นหลัง, Back ซีกซ้าย, Forward ซีกขวา)
@@ -180,7 +183,7 @@ function plotGraph() {
   Highcharts.chart("chartGVCRange02", {
     chart: { type: "column", backgroundColor: "#FFFFFF" },
     title: {
-      text: `How do ${countryName}'s GVC linkages compare across different periods?`,
+      text: t('gvc.chartPeriodsTitle', { economy: countryName }),
     },
     xAxis: {
       categories: catsDup,
@@ -190,7 +193,7 @@ function plotGraph() {
     },
     yAxis: {
       min: 0,
-      title: { text: "USD Billion", style: { fontSize: "14px" } },
+      title: { text: t('gvc.usdBillion'), style: { fontSize: "14px" } },
       labels: {
         formatter() {
           return `$${this.value}`;
@@ -211,9 +214,9 @@ function plotGraph() {
       useHTML: true,
       formatter() {
         const p = this.point;
-        let html = `<b>${this.series.name}</b><br/>Period: ${p.period}<br/>Value: $${p.y} billion`;
+        let html = `<b>${this.series.name}</b><br/>${t('gvc.period')}: ${p.period}<br/>${t('gvc.value')}: $${p.y} ${t('gvc.billion')}`;
         if (typeof p.share !== "undefined") {
-          html += `<br/>Share: ${p.share}% of Gross Exports<br/>Gross Exports: $${p.gross} billion`;
+          html += `<br/>${t('gvc.share')}: ${p.share}% ${t('gvc.ofGross')}<br/>${t('gvc.grossExports')}: $${p.gross} ${t('gvc.billion')}`;
         }
         return html;
       },
@@ -222,7 +225,7 @@ function plotGraph() {
     series: [
       // Gross (พื้นหลัง) วางทุกคอลัมน์
       {
-        name: "Gross Exports",
+        name: t('gvc.grossExports'),
         zIndex: 0,
         pointWidth: 50,
         pointPlacement: 0,
@@ -236,7 +239,7 @@ function plotGraph() {
       },
       // Backward — เฉพาะกลุ่มแรก (คอลัมน์ 0,1)
       {
-        name: "Backward Linkages",
+        name: t('gvc.backward'),
         zIndex: 2,
         pointWidth: 50,
         pointPlacement: 0.16,
@@ -262,7 +265,7 @@ function plotGraph() {
       },
       // Forward — เฉพาะกลุ่มสอง (คอลัมน์ 2,3)
       {
-        name: "Forward Linkages",
+        name: t('gvc.forward'),
         zIndex: 2,
         pointWidth: 50,
         pointPlacement: 0.16,
@@ -317,12 +320,12 @@ async function loadAndRender() {
     forwShare.value = [p1Sum.forwShare, p2Sum.forwShare];
 
     // สร้างคำอธิบาย
-    desBackward.value = buildDesc("foreign value added", {
+    desBackward.value = buildDesc(t('gvc.foreignValueAdded'), {
       share: backShare.value,
       valB: backB.value,
     });
     desForward.value = buildDesc(
-      `${countryName} exports used as inputs in other countries' exports`,
+      t('gvc.exportedInputs', { economy: countryName }),
       {
         share: forwShare.value,
         valB: forwB.value,

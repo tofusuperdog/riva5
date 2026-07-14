@@ -6,16 +6,16 @@
       <div class="flex flex-col md:flex-row items-center justify-center">
         <div class="py-2">
           <div class="text-xl md:text-2xl text-semibold">
-            GVC overview by year
+            {{ t('gvc.overviewByYear') }}
           </div>
           <div class="text-xs">
-            Explore detailed linkages in a specific year
+            {{ t('gvc.exploreYear') }}
           </div>
         </div>
         <div class="px-6">
           <div class="w-[200px] md:w-[150px]">
             <div style="height: 90px">
-              <div style="font-size: 14px" class="text-white">Year</div>
+              <div style="font-size: 14px" class="text-white">{{ t('gvc.year') }}</div>
               <div class="q-pt-xs">
                 <q-select
                   v-model="yearEnd"
@@ -37,6 +37,9 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n({ useScope: "global" });
 
 // 📌 Connection Database Server Info
 const { serverData } = serverSetup();

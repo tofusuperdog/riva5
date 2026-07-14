@@ -27,7 +27,7 @@
         </div> -->
         <div class="flex fwhite px-2 lt-sm">
           <div>
-            <div class="font-semibold">View by</div>
+            <div class="font-semibold">{{ t("participation.viewBy") }}</div>
           </div>
         </div>
 
@@ -36,14 +36,14 @@
         >
           <div class="lg:w-[350px] md:w-[300px]">
             <EcoSelect
-              label="Exporting economy"
+              :label="t('participation.exportingEconomy')"
               :initialValue="exportingISOInit"
               @update:selected="onUpdateExportISO"
             />
           </div>
           <div class="lg:w-[350px] md:w-[300px]">
             <EcoSelect
-              label="Importing economy"
+              :label="t('participation.importingEconomy')"
               :initialValue="importingISOInit"
               @update:selected="onUpdateImportISO"
             />
@@ -54,14 +54,14 @@
         >
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
-              label="Period start"
+              :label="t('participation.periodStart')"
               @update="onUpdateYearStart"
               :initialValue="yearStartInit"
             />
           </div>
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
-              label="Period end"
+              :label="t('participation.periodEnd')"
               @update="onUpdateYearEnd"
               :initialValue="yearEndInit"
             />
@@ -76,23 +76,21 @@
             v-show="isInputApply"
             @click="onClickApply"
           >
-            Apply
+            {{ t("participation.apply") }}
           </div>
           <div
             class="bg-[#fdc20083] fblack h-10 px-4 rounded-sm inline-flex items-center w-full text-center justify-center md:w-[220px]"
             v-show="!isInputApply"
           >
-            Apply
+            {{ t("participation.apply") }}
           </div>
         </div>
         <div class="h-6 text-center text-yellow-300">
           <span v-show="showError"
-            >The exporting economy cannot be the same as the importing
-            economy.</span
+            >{{ t("participation.sameEconomyError") }}</span
           >
           <span v-show="showInvalidYear">
-            Period end must be a year after the Period start. Please select a
-            valid range.</span
+            {{ t("participation.yearRangeError") }}</span
           >
         </div>
       </div>
@@ -106,6 +104,8 @@ import { useRouter, useRoute } from "vue-router";
 import { LocalStorage, Notify } from "quasar";
 import { serverSetup } from "../../pages/server";
 import axios from "axios";
+import { useI18n } from "vue-i18n";
+import { translateSector } from "../../i18n/sectors";
 
 import EcoSelect from "../VAEconomySelect.vue";
 import yearSelect from "../VAYearSelect.vue";
@@ -114,6 +114,7 @@ import sectorSelect from "../VASectorSelect.vue";
 // 🧭 Routing
 const router = useRouter();
 const route = useRoute();
+const { locale, t } = useI18n({ useScope: "global" });
 
 // 📌 Select type: Single Year / Time Range
 
@@ -252,6 +253,11 @@ const onUpdateSector = (selected) => {
 
   if (!sectorData) return; // ป้องกันไม่ให้ set undefined
 
+  sectorData.sectorName = translateSector(
+    { catID: sectorData.sectorID, category: sectorData.sectorName },
+    locale.value,
+  );
+  sectorData.sectorShortName = sectorData.sectorName;
   inputData.value.sector = sectorData;
   updateLocalStorage("sector", selected);
 
@@ -321,17 +327,17 @@ const onClickApply = async () => {
     checkYearPass = 1;
   }
   if (checkYearPass === 1) {
-    alert(
-      `Limited data available\n\n` +
-        `${inputData.value.exporting.name} - ${inputData.value.importing.name} is available only for ${yearRangeShow[0]}–${yearRangeShow[1]}.\n` +
-        `Please adjust Period start/end within this range and apply again.`
-    );
+    alert(`${t("participation.limitedData")}\n\n${t("participation.availability", {
+      exporting: inputData.value.exporting.name,
+      importing: inputData.value.importing.name,
+      start: yearRangeShow[0],
+      end: yearRangeShow[1],
+    })}\n${t("participation.adjustPeriod")}`);
     return;
   }
 
   Notify.create({
-    message:
-      "Your changes have been applied. Scroll down to review the results.",
+    message: t("participation.applied"),
     color: "positive",
     position: "bottom",
     timeout: 1500,

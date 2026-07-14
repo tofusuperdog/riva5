@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col min-h-screen bg-[#f7f7f7]">
     <main class="flex-1 lg:mb-[200px]">
-      <VAHeader :menu="pageName" class="fixed top-0 left-0 w-full" />
+      <HeaderMain class="forward-top-menu" />
       <VATitle
         :menu="pageName"
         class="mt-15"
@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import VAHeader from "../components/VAHeader.vue";
+import HeaderMain from "../components/Header.vue";
 import VATitle from "../components/VATitle.vue";
 import VAContentMainF from "../components/VAForwardSector/VAContentMainF.vue";
 import VAKeyWithoutDataF from "../components/VAForwardSector/VAKeyWithoutDataF.vue";
@@ -112,4 +112,6 @@ const InputSingleYear = (yearInput) => {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.forward-top-menu { position: fixed !important; top: 0; left: 0; width: 100%; z-index: 2147483647 !important; }
+</style>

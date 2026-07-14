@@ -48,8 +48,10 @@
 
 <script setup>
 import axios from "axios";
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { serverSetup } from "../pages/server";
+import { translateEconomy } from "../i18n/economies";
 
 // 🧾 Props / Emits
 const props = defineProps({
@@ -63,9 +65,21 @@ const emit = defineEmits(["update:selected"]);
 
 // 🌐 Server
 const { serverData } = serverSetup();
+const { locale } = useI18n({ useScope: "global" });
 
 // 🗂️ State
-const economyList = ref([]);
+const economyListRaw = ref([]);
+const economyList = computed(() => {
+  let headerIndex = 0;
+  return economyListRaw.value.map((opt) => ({
+    ...opt,
+    label: translateEconomy(
+      { iso: opt.value, name: opt.name },
+      locale.value,
+      opt.value === "-" ? headerIndex++ : 0,
+    ),
+  }));
+});
 const selectedValue = ref(null);
 const optionsReady = ref(false);
 
@@ -84,9 +98,9 @@ async function loadOptions() {
   );
   const { data = [] } = await axios.get(url);
 
-  economyList.value = data.map((opt) => ({
+  economyListRaw.value = data.map((opt) => ({
     id: opt.id,
-    label: opt.name,
+    name: opt.name,
     value: opt.iso,
     disable: !!opt.disable,
   }));

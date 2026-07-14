@@ -1,6 +1,6 @@
 <template>
   <div style="height: 90px">
-    <div style="font-size: 14px" class="text-white">Exporting Sector</div>
+    <div style="font-size: 14px" class="text-white">{{ t("backward.exportingSector") }}</div>
 
     <div class="q-pt-xs">
       <q-select
@@ -51,12 +51,15 @@
 import { ref, watch, onMounted, computed } from "vue";
 import axios from "axios";
 import { serverSetup } from "../pages/server.js";
+import { useI18n } from "vue-i18n";
+import { translateSector, translateSectorGroup } from "../i18n/sectors";
 
 const props = defineProps({
   initialValue: { type: [String, Number], default: null },
 });
 const emit = defineEmits(["update"]);
 const { serverData } = serverSetup();
+const { locale, t } = useI18n({ useScope: "global" });
 
 /** รายการจาก API แบบ “จริง” (ไม่มี header) */
 const sectorListRaw = ref([]);
@@ -89,7 +92,12 @@ const sectorOptions = computed(() => {
   const list = sectorListRaw.value;
   if (!list.length) return [];
 
-  const byValue = new Map(list.map((o) => [String(o.value), o]));
+  const byValue = new Map(
+    list.map((o) => [
+      String(o.value),
+      { ...o, label: translateSector(o.raw, locale.value) },
+    ]),
+  );
 
   const pick = (values) =>
     values
@@ -102,19 +110,19 @@ const sectorOptions = computed(() => {
     ...pick(["0", "1", "2"]),
 
     // header: Manufacturing Low tech
-    headerOpt("Manufacturing Low tech", "mfg_low"),
+    headerOpt(translateSectorGroup("manufacturingLow", locale.value), "mfg_low"),
 
     // 3,4,5,6,7,10,16
     ...pick(["3", "4", "5", "6", "7", "10", "16"]),
 
     // header: Manufacturing High and medium tech
-    headerOpt("Manufacturing High and medium tech", "mfg_high_med"),
+    headerOpt(translateSectorGroup("manufacturingHighMedium", locale.value), "mfg_high_med"),
 
     // 8,9,11,12,13,14,15
     ...pick(["8", "9", "11", "12", "13", "14", "15"]),
 
     // header: Services
-    headerOpt("Services", "services"),
+    headerOpt(translateSectorGroup("services", locale.value), "services"),
 
     // 19 ถึง 35
     ...pick(rangeStr(17, 35)),
@@ -128,6 +136,7 @@ async function loadSectorList() {
   sectorListRaw.value = res.data.map((d) => ({
     label: d.category,
     value: String(d.catID),
+    raw: d,
   }));
 }
 

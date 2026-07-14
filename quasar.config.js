@@ -1,7 +1,7 @@
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
-import { defineConfig } from "#q-app/wrappers";
+import { defineConfig } from "@quasar/app-vite";
 import { fileURLToPath } from "node:url";
 
 export default defineConfig((ctx) => {
@@ -21,7 +21,7 @@ export default defineConfig((ctx) => {
     extras: [
       // 'ionicons-v4',
       // 'mdi-v7',
-      "fontawesome-v6",
+      "fontawesome-v7",
       // 'eva-icons',
       // 'themify',
       // 'line-awesome',
@@ -56,6 +56,13 @@ export default defineConfig((ctx) => {
 
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
+
+      extendViteConf(viteConf) {
+        Object.assign(viteConf.resolve.alias, {
+          src: fileURLToPath(new URL("./src", import.meta.url)),
+          pages: fileURLToPath(new URL("./src/pages", import.meta.url)),
+        });
+      },
 
       vitePlugins: [
         [

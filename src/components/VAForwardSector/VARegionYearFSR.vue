@@ -3,7 +3,7 @@
     class="max-w-[1200px] w-[95%] mx-auto bg-white border border-[#DDDDDD] rounded-md mt-4"
   >
     <!-- หัวข้อ -->
-    <div class="p-2 text-lg font-bold fblack">Region across years</div>
+    <div class="p-2 text-lg font-bold fblack">{{ t('forward.regionYears') }}</div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
       v-if="isLoading"
@@ -37,13 +37,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t('forward.preparing') }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t('forward.rendering') }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t('forward.patience') }}
             </div>
           </div>
         </div>
@@ -66,7 +66,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t('forward.viewLess') : t('forward.viewMore') }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -84,7 +84,7 @@
             </div>
           </div>
           <div class="cursor-pointer text-[#0672CB]" @click="openBreakdown(r)">
-            <u>Click here to see the breakdown</u>
+            <u>{{ t('backward.charts.breakdown') }}</u>
           </div>
           <div>{{ r.desc }}</div>
         </div>
@@ -115,6 +115,8 @@ import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from 'vue-i18n';
+const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -135,7 +137,7 @@ const regionCards = ref([
   {
     id: 0,
     key: "Asia-Pacific",
-    title: "Asia-Pacific",
+    title: t('backward.charts.regionAsia'),
     color: "#1E88E5",
     icon: "images/asia.svg",
     desc: "",
@@ -143,7 +145,7 @@ const regionCards = ref([
   {
     id: 1,
     key: "Europe",
-    title: "Europe",
+    title: t('backward.charts.regionEurope'),
     color: "#FB8C00",
     icon: "images/europe.svg",
     desc: "",
@@ -151,7 +153,7 @@ const regionCards = ref([
   {
     id: 2,
     key: "North America",
-    title: "North America",
+    title: t('backward.charts.regionNorthAmerica'),
     color: "#2E7D32",
     icon: "images/northamerica.svg",
     desc: "",
@@ -159,7 +161,7 @@ const regionCards = ref([
   {
     id: 3,
     key: "Latin America",
-    title: "Latin America",
+    title: t('backward.charts.regionLatinAmerica'),
     color: "#8E24AA",
     icon: "images/latinamerica.svg",
     desc: "",
@@ -167,7 +169,7 @@ const regionCards = ref([
   {
     id: 4,
     key: "Rest of the World",
-    title: "Rest of the World",
+    title: t('backward.charts.regionRestWorld'),
     color: "#EC69B3",
     icon: "images/row.svg",
     desc: "",
@@ -323,7 +325,7 @@ const loadData = async () => {
       ),
     );
   });
-  seriesDrill.value[4][0].name = "Rest of the World";
+  seriesDrill.value[4][0].name = t('backward.charts.regionRestWorld');
   isLoading.value = false;
 
   genDes();
@@ -334,8 +336,8 @@ const moneyShort = (n) => {
   if (n == null || isNaN(n)) return "-";
   const abs = Math.abs(n);
 
-  if (abs >= 1000) return `$${(n / 1000).toFixed(1)} billion`;
-  return `$${n.toFixed(1)} million`;
+  if (abs >= 1000) return `$${(n / 1000).toFixed(1)} ${t('forward.billion')}`;
+  return `$${n.toFixed(1)} ${t('forward.million')}`;
 };
 
 const genDes = () => {
@@ -343,22 +345,28 @@ const genDes = () => {
     let lasty = seriesMain.value[i].data[yearEnd - yearStart].y;
     let firsty = seriesMain.value[i].data[0].y;
     let diff = lasty - firsty;
-    let textdiff = "unchanged";
+    let textdiff = t('backward.charts.unchanged');
     if (diff < 0) {
-      textdiff = "down by " + Math.abs(diff).toFixed(1) + " percentage points";
+      textdiff = t('backward.charts.downBy', { value: Math.abs(diff).toFixed(1) });
     } else if (diff > 0) {
-      textdiff = "up by " + Math.abs(diff).toFixed(1) + " percentage points";
+      textdiff = t('backward.charts.upBy', { value: Math.abs(diff).toFixed(1) });
     }
     let top = "";
     if (i != 4) {
-      top = `${
-        seriesDrill.value[i][0].name
-      } is the top regional destination, accounting for ${
-        seriesDrill.value[i][0].data[yearEnd - yearStart].y
-      }% of ${exporting.value.name}'s intermediate exports to GVCs.`;
+      top = t('forward.topRegionalDestination', {
+        economy: seriesDrill.value[i][0].name,
+        share: seriesDrill.value[i][0].data[yearEnd - yearStart].y,
+      });
     }
 
-    let des = `${lasty}% of ${exporting.value.name}'s Forward linkages go to ${regionCards.value[i].title}, ${textdiff} since  ${yearStart}. ${top} `;
+    let des = `${t('forward.destinationYearDescription', {
+      share: lasty,
+      exporting: exporting.value.name,
+      sector: sector.value.sectorShortName,
+      destination: regionCards.value[i].title,
+      change: textdiff,
+      start: yearStart,
+    })} ${top}`;
     regionCards.value[i].desc = des;
   }
 };
@@ -380,7 +388,7 @@ const drawBreakdown = () => {
     xAxis: { categories: years, tickLength: 0 },
     yAxis: {
       min: 0,
-      title: { text: "Percent of Forward Linkage" },
+      title: { text: t('forward.percentForward') },
       labels: {
         formatter() {
           return this.value + "%";
@@ -394,9 +402,9 @@ const drawBreakdown = () => {
 
       formatter() {
         return `<div style="font-weight:700">${this.series.name}</div>
-        <div>Year: ${this.category}</div>
-        <div>Share: ${this.y.toFixed(1)}% of forward linkages</div>
-        <div>Value: ${moneyShort(this.point.value)}</div>`;
+        <div>${t('forward.year')}: ${this.category}</div>
+        <div>${t('forward.share')}: ${this.y.toFixed(1)}% ${t('forward.ofForward')}</div>
+        <div>${t('forward.value')}: ${moneyShort(this.point.value)}</div>`;
       },
     },
     legend: {
@@ -431,9 +439,7 @@ const drawBreakdown = () => {
 const drawMainChart = () => {
   let categoriesData = categories.value.map(String);
   let series = seriesMain.value;
-  let title = `In which regions do ${
-    exporting.value.name
-  }'s exports in ${sector.value.sectorShortName.toLowerCase()} contribute the most towards the production of further exports?`;
+  let title = t('forward.regionForwardTitle', { exporting: exporting.value.name, sector: sector.value.sectorShortName.toLowerCase() });
 
   Highcharts.chart("chartBSRange01", {
     chart: { type: "spline", backgroundColor: "#fff" },
@@ -445,7 +451,7 @@ const drawMainChart = () => {
     yAxis: {
       min: 0,
 
-      title: { text: "Percent of Forward Linkages" },
+      title: { text: t('forward.percentForward') },
       labels: {
         formatter() {
           return this.value + "%";
@@ -467,9 +473,9 @@ const drawMainChart = () => {
         return `
           <div style="min-width:220px">
             <div style="font-weight:700">${this.series.name}</div>
-            <div>Year: ${year}</div>
-            <div>Share:&nbsp; ${share.toFixed(1)}% of forward linkages</div>
-               <div>Value:&nbsp; ${moneyShort(Number(valueRaw))}</div>
+            <div>${t('forward.year')}: ${year}</div>
+            <div>${t('forward.share')}:&nbsp; ${share.toFixed(1)}% ${t('forward.ofForward')}</div>
+               <div>${t('forward.value')}:&nbsp; ${moneyShort(Number(valueRaw))}</div>
           </div>
         `;
       },
@@ -492,6 +498,17 @@ watch(
 onMounted(async () => {
   await loadEconomyList();
   await loadData();
+});
+watch(locale, () => {
+  const titles = [
+    t('backward.charts.regionAsia'),
+    t('backward.charts.regionEurope'),
+    t('backward.charts.regionNorthAmerica'),
+    t('backward.charts.regionLatinAmerica'),
+    t('backward.charts.regionRestWorld'),
+  ];
+  regionCards.value.forEach((card, index) => { card.title = titles[index]; });
+  loadData();
 });
 </script>
 

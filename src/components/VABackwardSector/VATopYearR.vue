@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      Top source economy across years
+      {{ t("backward.charts.topSourceYears") }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -20,10 +20,10 @@
               <q-icon name="fa-solid fa-circle-info" size="lg" />
             </div>
             <div class="text-base font-semibold">
-              No trade occurred under the selected settings
+              {{ t("backward.charts.noTrade") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5 text-center">
-              Try a different year range, sector, or economy pair.
+              {{ t("backward.charts.tryDifferent") }}
             </div>
           </div>
         </div>
@@ -61,13 +61,13 @@
 
           <div class="text-left">
             <div class="text-base font-semibold">
-              Preparing the visualization
+              {{ t("backward.charts.preparing") }}
             </div>
             <div class="text-sm text-gray-600 mt-0.5">
-              Rendering the chart and finalizing the display.
+              {{ t("backward.charts.rendering") }}
             </div>
             <div class="text-xs text-gray-500 mt-3">
-              Thank you for your patience.
+              {{ t("backward.charts.patience") }}
             </div>
           </div>
         </div>
@@ -87,7 +87,7 @@
         class="lg:hidden text-[#0672CB] cursor-pointer text-center font-semibold w-full mb-2"
         @click="showDetail = !showDetail"
       >
-        {{ showDetail ? "View less" : "View more" }}
+        {{ showDetail ? t("backward.charts.viewLess") : t("backward.charts.viewMore") }}
         <q-icon
           :name="showDetail ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
         />
@@ -121,11 +121,14 @@ import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 // ถ้าไม่ได้โหลด Highcharts แบบ global ให้ import ด้วย
 // import Highcharts from "highcharts";
 
 const props = defineProps({ inputData: Object });
 const { serverData } = serverSetup();
+const { locale, t } = useI18n({ useScope: "global" });
 const $q = useQuasar();
 
 const showDetail = ref($q.screen.gt.sm);
@@ -155,7 +158,7 @@ const money = (n) =>
   `$${Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  })} million`;
+  })} ${t("backward.charts.million")}`;
 
 function genSeries(iso, rawData, index) {
   const start = Number(yearStart.value);
@@ -205,7 +208,7 @@ function genSeries(iso, rawData, index) {
   }));
 
   return {
-    name: economic,
+    name: translateEconomy({ iso: source_country, name: economic }, locale.value),
     color: colorGraph[index % colorGraph.length],
     data: points,
     type: "spline",
@@ -259,7 +262,7 @@ async function loadData() {
 }
 
 function plotGraph() {
-  const title = `Which economies are the top sources of Foreign Value Added (FVA) embedded in ${exporting.value.name}'s ${sector.value.sectorShortName} exports to ${importing.value.name}?`;
+  const title = t("backward.charts.topTitle", { exporting: exporting.value.name, sector: sector.value.sectorShortName, importing: importing.value.name });
   const cats = categories.value.map(String); // ให้แน่ใจว่าเป็นสตริง
 
   Highcharts.chart("chartBSRange03", {
@@ -275,7 +278,7 @@ function plotGraph() {
     },
     yAxis: {
       min: 0,
-      title: { text: "Percent of Backward Linkages" },
+      title: { text: t("backward.charts.percentBackward") },
       gridLineColor: "#eee",
       labels: {
         formatter() {
@@ -293,9 +296,9 @@ function plotGraph() {
         return `
           <div style="min-width:220px">
             <div style="font-weight:700">${this.series.name}</div>
-            <div>Year: ${yr}</div>
-            <div>Share: ${Number(p.y).toFixed(1)}% of backward linkages</div>
-            <div>Value: ${money(p.value)}</div>
+            <div>${t("backward.charts.year")}: ${yr}</div>
+            <div>${t("backward.charts.share")}: ${Number(p.y).toFixed(1)}% ${t("backward.charts.ofBackward")}</div>
+            <div>${t("backward.charts.value")}: ${money(p.value)}</div>
           </div>`;
       },
     },
@@ -312,18 +315,18 @@ const genDes = () => {
     let lasty = series.value[i].data[series.value[i].data.length - 1].y;
     let firsty = series.value[i].data[0].y;
     let diff = lasty - firsty;
-    let textdiff = "unchanged";
+    let textdiff = t("backward.charts.unchanged");
     if (diff < 0) {
-      textdiff = "down by " + Math.abs(diff).toFixed(1) + " percentage points";
+      textdiff = t("backward.charts.downBy", { value: Math.abs(diff).toFixed(1) });
     } else if (diff > 0) {
-      textdiff = "up by " + Math.abs(diff).toFixed(1) + " percentage points";
+      textdiff = t("backward.charts.upBy", { value: Math.abs(diff).toFixed(1) });
     }
 
     desData.value.push({
       econname: series.value[i].name,
       color: colorGraph[i],
       img: `/images/flags/${lastISO.value[i]}.png`,
-      des: `${lasty}% of ${exporting.value.name}'s ${sector.value.sectorShortName} FVA was sourced from ${series.value[i].name} in ${yearEnd.value}, ${textdiff} since  ${yearStart.value}.`,
+      des: t("backward.charts.topYearDescription", { share: lasty, exporting: exporting.value.name, sector: sector.value.sectorShortName, source: series.value[i].name, end: yearEnd.value, change: textdiff, start: yearStart.value }),
     });
   }
 };

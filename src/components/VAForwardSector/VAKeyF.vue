@@ -3,31 +3,28 @@
     class="max-w-[1200px] w-[95%] mx-auto relative z-100 bg-[#FFFFFF] border-1 border-[#DDDDDD] rounded-md p-2 md:p-4 mt-2 md:mt-4"
   >
     <div class="text-md md:text-lg font-semibold fblack">
-      Key policy questions (select by exporting sector)
+      {{ t('forward.sectorPolicyTitle') }}
     </div>
     <div class="fsub">
       <ul class="list-disc pl-6">
         <li>
-          Where does {{ exportingEconomy }} contribute the most towards export
-          production?
+          {{ t('forward.sectorPolicyOne', { economy: exportingEconomy }) }}
         </li>
-        <li>How does this compare across economies in the same region?</li>
+        <li>{{ t('forward.compareRegion') }}</li>
       </ul>
     </div>
     <div class="text-lg md:text-lg font-semibold fblack text-center mt-4">
-      Where does {{ exportingEconomy }} contribute towards export production?
+      {{ t('forward.summaryTitle', { economy: exportingEconomy }) }}
     </div>
     <div class="text-center lg:max-w-[60%] mx-auto">
-      This analysis traces {{ exportingEconomy }}'s Domestic Value Added (DVA)
-      embedded in intermediate goods, which are then used by an importing
-      country for its own production and for exports to a third country.
+      {{ t('forward.summaryDescription', { economy: exportingEconomy }) }}
     </div>
 
     <div class="flex flex-col md:flex-row mt-2 px-4 md:items-center">
       <div class="flex flex-col flex-1">
         <div class="border-1 border-[#1A425A] p-2 bg-[#F9E5FD] rounded-t-md">
           <div class="text-[#BA15DB] font-semibold text-center">
-            Exporting economy
+            {{ t('forward.exportingEconomy') }}
           </div>
           <div class="flex items-center justify-center">
             <div v-if="isShowFlagExport">
@@ -38,7 +35,7 @@
         </div>
         <div class="border-1 border-[#1A425A] p-2 bg-[#F9E5FD] rounded-b-md">
           <div class="text-[#BA15DB] font-semibold text-center">
-            Exporting sector
+            {{ t('forward.exportingSector') }}
           </div>
           <div class="flex items-center justify-center">
             <div><img :src="sectorIMG" alt="" class="h-5" /></div>
@@ -58,11 +55,11 @@
         class="border-1 border-[#1A425A] p-2 bg-[#C9E2F4] rounded-md h-[60px] flex-1"
       >
         <div class="text-[#005DAA] font-semibold text-center">
-          Importing economy
+          {{ t('forward.importingEconomy') }}
         </div>
         <div class="flex items-center justify-center">
           <div><img src="/images/world.svg" alt="" class="h-5" /></div>
-          <div class="px-2 font-semibold">World</div>
+          <div class="px-2 font-semibold">{{ t('forward.world') }}</div>
         </div>
       </div>
 
@@ -77,11 +74,11 @@
         class="border-1 border-[#1A425A] p-2 bg-[#bcfaea] rounded-md h-[60px] flex-1"
       >
         <div class="text-[#018d4c] font-semibold text-center">
-          Third economy
+          {{ t('forward.thirdEconomy') }}
         </div>
         <div class="flex items-center justify-center">
           <div><img src="/images/world.svg" alt="" class="h-5" /></div>
-          <div class="px-2 font-semibold">World</div>
+          <div class="px-2 font-semibold">{{ t('forward.world') }}</div>
         </div>
       </div>
     </div>
@@ -92,6 +89,9 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // ===== props / server =====
 const props = defineProps({ inputData: Object });
