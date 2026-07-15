@@ -94,7 +94,11 @@ import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
+import { translateEconomy } from "../../i18n/economies";
+import { translateSector } from "../../i18n/sectors";
 const { t, locale } = useI18n();
+const localizedExporting = () => translateEconomy(exporting.value, locale.value);
+const localizedSector = () => translateSector({ catID: sector.value.sectorID, category: sector.value.sectorShortName }, locale.value);
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -161,7 +165,7 @@ const isoToName = (iso) => {
   let dataSelected = ecoList.value.find((item) => item.iso == iso);
   if (dataSelected) {
     return {
-      name: dataSelected.economic,
+      name: translateEconomy({ iso: dataSelected.iso, name: dataSelected.economic }, locale.value),
       iso: dataSelected.iso,
       area: dataSelected.area,
     };
@@ -261,7 +265,7 @@ const loadData = async () => {
     .map((d) => {
       if (d.imp_country == "RoW") {
         return {
-          name: "Rest of the World",
+          name: t('backward.charts.regionRestWorld'),
           iso: "RoW",
           area: "Rest of the World",
           year: d.year,
@@ -370,13 +374,13 @@ const genDes = (top5) => {
       econname: seriesMain.value[i].name,
       color: colorList[i],
       img: `/images/flags/${top5[i]}.png`,
-      des: t('forward.destinationPeriodDescription', { current: categories.value[0].label2, share: lasty, exporting: exporting.value.name, sector: sector.value.sectorShortName, destination: seriesMain.value[i].name, change: textdiff, previous: categories.value[0].label1 }),
+      des: t('forward.destinationPeriodDescription', { current: categories.value[0].label2, share: lasty, exporting: localizedExporting(), sector: localizedSector(), destination: seriesMain.value[i].name, change: textdiff, previous: categories.value[0].label1 }),
     });
   }
 };
 
 const plotGraph = () => {
-  let title = t('forward.destinationShiftTitle', { exporting: exporting.value.name, sector: sector.value.sectorShortName.toLowerCase() });
+  let title = t('forward.destinationShiftTitle', { exporting: localizedExporting(), sector: localizedSector().toLowerCase() });
   let categoriesData = [categories.value[0].label1, categories.value[0].label2];
   let series = seriesMain.value;
 

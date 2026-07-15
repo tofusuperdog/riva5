@@ -25,6 +25,8 @@ import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
+import { translateEconomy, translateEconomyGroup } from "../../i18n/economies";
+import { translateSector } from "../../i18n/sectors";
 const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
@@ -50,7 +52,8 @@ const regionList = ref([
 
 // result
 const economyList = ref([]);
-const regionName = ref("");
+const rawRegionName = ref("");
+const regionName = computed(() => translateEconomyGroup(rawRegionName.value, locale.value));
 const gTotal = ref([]);
 const countriesISO = ref([]);
 const countriesName = ref([]);
@@ -61,7 +64,7 @@ const isoToData = (iso) => {
   let dataSelected = economyList.value.find((item) => item.iso == iso);
   if (dataSelected) {
     return {
-      name: dataSelected.economic,
+      name: translateEconomy({ iso: dataSelected.iso, name: dataSelected.economic }, locale.value),
       iso: dataSelected.iso,
       area: dataSelected.area,
     };
@@ -78,7 +81,7 @@ const loadEconomyList = async () => {
   const res2 = await axios.get(`${serverData.value}va/get_eco_not_group.php`);
   economyList.value = res2.data;
   // อัปเดต regionName ตาม exporting ปัจจุบัน
-  if (exporting.value?.iso) regionName.value = isoToRegion(exporting.value.iso);
+  if (exporting.value?.iso) rawRegionName.value = isoToRegion(exporting.value.iso);
 };
 
 const genSeriesMain = (arr, rName) => {
@@ -158,7 +161,7 @@ const loadData = async () => {
       if (d.imp_country == "RoW") {
         return {
           exp_country: d.exp_country,
-          name: "Rest of the World",
+          name: t('backward.charts.regionRestWorld'),
           iso: "RoW",
           area: "Rest of the World",
           year: d.year,
@@ -277,7 +280,8 @@ function pieTooltipFormatter() {
 }
 
 const drawChart = () => {
-  const title = t('forward.regionDestinationTitle', { region: regionName.value, sector: sector.value.sectorShortName.toLowerCase() });
+  const sectorName = translateSector({ catID: sector.value.sectorID, category: sector.value.sectorShortName }, locale.value).toLowerCase();
+  const title = t('forward.regionDestinationTitle', { region: regionName.value, sector: sectorName });
   const yTitle = t('forward.percentGrossTo', { economy: t('forward.world') });
   const mainSubtitleText = t('forward.clickBar');
 
@@ -314,7 +318,7 @@ const drawChart = () => {
           const categories = this.xAxis[0].categories || [];
           const country = e.point?.category ?? categories[e.point.x];
           this.setTitle({
-            text: t('forward.countryDestinationTitle', { country, sector: sector.value.sectorShortName.toLowerCase() }),
+            text: t('forward.countryDestinationTitle', { country, sector: sectorName }),
           });
         },
         drillup() {

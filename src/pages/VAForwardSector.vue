@@ -15,7 +15,7 @@
         @isShowGraph="checkShowGraph"
       />
       <VAKeyWithoutDataF v-if="!isShowGraph" class="" />
-      <div v-if="isShowGraph" class="">
+      <div v-if="isShowGraph" :key="locale" class="">
         <VAKeyF
           v-if="isShowGraph && inputDataFinal"
           :inputData="inputDataFinal"
@@ -74,13 +74,21 @@ import VARegionFS from "../components/VAForwardSector/VARegionFS.vue";
 
 import FooterMain from "../components/Footer.vue";
 
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { locale } = useI18n();
 
 const pageName = ref("ForwardLinkages");
 const inputDataFinal = ref(null);
 const selectedYear = ref(null); // ปีเดี่ยวที่ได้มาจาก GVCInputSingleYear
 const isShareOpen = ref(false);
 const isShowGraph = ref(false);
+
+watch(locale, () => {
+  isShowGraph.value = false;
+  isShareOpen.value = false;
+});
 
 const InputData = (data) => {
   isShowGraph.value = true;

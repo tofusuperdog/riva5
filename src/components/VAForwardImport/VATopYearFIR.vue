@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      {{ t('forward.topSectorsYears', { exporting: exporting.name, importing: importing.name }) }}
+      {{ t('forward.topSectorsYears', { exporting: exportingName, importing: importingName }) }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -90,12 +90,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
 import { translateSector } from "../../i18n/sectors";
+import { translateEconomy } from "../../i18n/economies";
 const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
@@ -111,6 +112,8 @@ const isLoading = ref(true);
 // ===== input from parent component =====
 const exporting = ref(props.inputData.exporting);
 const importing = ref(props.inputData.importing);
+const exportingName = computed(() => translateEconomy(exporting.value, locale.value));
+const importingName = computed(() => translateEconomy(importing.value, locale.value));
 const yearStart = Number(props.inputData.yearStart);
 const yearEnd = Number(props.inputData.yearEnd);
 
@@ -239,7 +242,7 @@ const loadData = async () => {
 };
 
 const plotGraph = (top5) => {
-  let title = t('forward.topSectorTitle', { exporting: exporting.value.name, importing: importing.value.name });
+  let title = t('forward.topSectorTitle', { exporting: exportingName.value, importing: importingName.value });
   let categoriesData = yearList.value.map((d) => d.toString());
   let series = seriesMain.value;
 
@@ -308,7 +311,7 @@ const desGen = (top5, top5ID) => {
       sectorName: seriesMain.value[i].name,
       img: `/images/sector/${i + 1}/${scid}.svg`,
       color: colorList[i],
-      des: t('forward.sectorYearDescription', { sector: seriesMain.value[i].name, share: lasty, exporting: exporting.value.name, importing: importing.value.name, change: textdiff, start: yearStart }),
+      des: t('forward.sectorYearDescription', { sector: seriesMain.value[i].name, share: lasty, exporting: exportingName.value, importing: importingName.value, change: textdiff, start: yearStart }),
     });
   }
   // console.clear();

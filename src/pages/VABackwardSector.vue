@@ -75,7 +75,7 @@ import VARegionS from "../components/VABackwardSector/VARegionS.vue";
 
 import FooterMain from "../components/Footer.vue";
 
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { locale } = useI18n({ useScope: "global" });
@@ -100,6 +100,11 @@ const checkPass = (data) => {
 const checkShowGraph = (value) => {
   isShowGraph.value = value;
 };
+
+watch(locale, () => {
+  isShowGraph.value = false;
+  isShareOpen.value = false;
+});
 
 // ✅ คำนวณ inputDataSingleYear ให้ผูกกับทั้งประเทศ (inputDataFinal) และปีเดี่ยว (selectedYear)
 const inputDataSingleYear = computed(() => {

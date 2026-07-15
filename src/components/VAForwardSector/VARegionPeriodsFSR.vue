@@ -116,6 +116,8 @@ import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
+import { translateEconomy } from "../../i18n/economies";
+import { translateSector } from "../../i18n/sectors";
 const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
@@ -218,7 +220,7 @@ const isoToName = (iso) => {
   let dataSelected = ecoList.value.find((item) => item.iso == iso);
   if (dataSelected) {
     return {
-      name: dataSelected.economic,
+      name: translateEconomy({ iso: dataSelected.iso, name: dataSelected.economic }, locale.value),
       iso: dataSelected.iso,
       area: dataSelected.area,
     };
@@ -386,6 +388,8 @@ const loadData = async () => {
 };
 
 const desGen = () => {
+  const exportingName = translateEconomy(exporting.value, locale.value);
+  const sectorName = translateSector({ catID: sector.value.sectorID, category: sector.value.sectorShortName }, locale.value);
   regionCards.value.forEach((item, i) => {
     let lasty = seriesMain.value[i].data[1].y;
     let firsty = seriesMain.value[i].data[0].y;
@@ -406,8 +410,8 @@ const desGen = () => {
     let des = `${t('forward.destinationPeriodDescription', {
       current: categories.value[0].label2,
       share: lasty,
-      exporting: exporting.value.name,
-      sector: sector.value.sectorShortName,
+      exporting: exportingName,
+      sector: sectorName,
       destination: item.title,
       change: textdiff,
       previous: categories.value[0].label1,
@@ -417,7 +421,9 @@ const desGen = () => {
 };
 
 const drawChart = () => {
-  let title = t('forward.regionForwardPeriodsTitle', { exporting: exporting.value.name, sector: sector.value.sectorShortName.toLowerCase() });
+  const exportingName = translateEconomy(exporting.value, locale.value);
+  const sectorName = translateSector({ catID: sector.value.sectorID, category: sector.value.sectorShortName }, locale.value);
+  let title = t('forward.regionForwardPeriodsTitle', { exporting: exportingName, sector: sectorName.toLowerCase() });
   let categoriesData = [categories.value[0].label1, categories.value[0].label2];
   let series = seriesMain.value;
   Highcharts.chart("chartFSRange02", {

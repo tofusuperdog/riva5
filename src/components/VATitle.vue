@@ -196,10 +196,16 @@ const localizedPageName = computed(() => {
   if (props.menu === "gvcoverview") return t("gvc.title");
   if (props.menu === "ParticipationInGVCs") return t("participation.title");
   if (props.menu === "BackwardLinkages") return t("backward.title");
+  if (props.menu === "ForwardLinkages") return t("forward.title");
+  if (props.menu === "CountryBriefs") return t("nav.briefs");
   return pageName.value;
 });
 const translationScope = computed(() =>
-  props.menu === "ParticipationInGVCs" ? "participation" : props.menu === "gvcoverview" ? "gvc" : null,
+  props.menu === "ParticipationInGVCs" ? "participation" :
+      props.menu === "gvcoverview" ? "gvc" :
+      props.menu === "BackwardLinkages" ? "backward" :
+        props.menu === "ForwardLinkages" ? "forward" :
+          props.menu === "CountryBriefs" ? "economyBrief" : null,
 );
 const shareAction = computed(() => translationScope.value ? t(`${translationScope.value}.shareAction`) : "SHARE");
 const sharePage = computed(() => translationScope.value ? t(`${translationScope.value}.sharePage`) : "Share this page");

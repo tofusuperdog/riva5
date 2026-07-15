@@ -47,6 +47,8 @@ import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
+import { translateEconomy } from "../../i18n/economies";
+import { translateSector } from "../../i18n/sectors";
 const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
@@ -140,7 +142,7 @@ const loadData = async () => {
       let cData;
       if (d.imp_country == "RoW") {
         cData = {
-          economic: "Rest of the World",
+          economic: t('backward.charts.regionRestWorld'),
           iso: "RoW",
           area: "Rest of the World",
         };
@@ -149,7 +151,7 @@ const loadData = async () => {
       }
       if (cData) {
         return {
-          name: cData.economic,
+          name: translateEconomy({ iso: cData.iso, name: cData.economic }, locale.value),
           parent: cData.area,
           valMn: Number(d.value),
           value: shareNum(Number(d.value) / totalF),
@@ -206,7 +208,9 @@ const drawChart = (getdata, top5) => {
     chartInstance.destroy();
   }
 
-  let title = t('forward.destinationTitle', { exporting: exporting.value.name });
+  const exportingName = translateEconomy(exporting.value, locale.value);
+  const sectorName = translateSector({ catID: sector.value.sectorID, category: sector.value.sectorShortName }, locale.value);
+  let title = t('forward.destinationTitle', { exporting: exportingName });
   // top5 = [{ name: 'A', value: 12.3 }, ...] (สูงสุด 5 ตัว)
   const topText = (top5 ?? [])
     .slice(0, 5)
@@ -219,8 +223,8 @@ const drawChart = (getdata, top5) => {
     : `no major partner economies identified`;
 
   let subtitle = t('forward.importerSubtitle', {
-    exporting: exporting.value.name,
-    sector: sector.value.sectorShortName,
+    exporting: exportingName,
+    sector: sectorName,
     gross: moneyShort(gexport.value),
     year: year.value,
     forward: moneyShort(backValue.value),

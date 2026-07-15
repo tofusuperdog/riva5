@@ -19,33 +19,35 @@
         </div>
 
         <div
-          class="px-2 md:px-0 pb-2 text-white flex items-center md:w-[632px] md:mx-auto lg:w-[732px]"
+          class="px-2 md:px-0 pb-2 text-white flex flex-col items-start lg:flex-row lg:items-center md:w-[632px] md:mx-auto lg:w-[732px]"
         >
           <div class="gt-xs">
             <div class="font-semibold">{{ t("backward.viewBy") }}</div>
             <div class="text-xs">{{ t("backward.chooseFocus") }}</div>
           </div>
-          <div class="w-5"></div>
-          <div>
-            <q-radio
-              v-model="selectType"
-              val="Exporting Sector"
-              :label="t('backward.exportingSector')"
-              color="warning"
-              dark
-              @update:model-value="onChangeRoute"
-            />
-          </div>
-          <div class="w-5"></div>
-          <div>
-            <q-radio
-              v-model="selectType"
-              val="Source Economy"
-              :label="t('backward.sourceEconomy')"
-              color="warning"
-              dark
-              @update:model-value="onChangeRoute"
-            />
+          <div class="hidden lg:block w-5"></div>
+          <div class="flex flex-col md:flex-row md:items-center md:mt-1 lg:mt-0">
+            <div>
+              <q-radio
+                v-model="selectType"
+                val="Exporting Sector"
+                :label="t('backward.exportingSector')"
+                color="warning"
+                dark
+                @update:model-value="onChangeRoute"
+              />
+            </div>
+            <div class="hidden md:block w-5"></div>
+            <div>
+              <q-radio
+                v-model="selectType"
+                val="Source Economy"
+                :label="t('backward.sourceEconomy')"
+                color="warning"
+                dark
+                @update:model-value="onChangeRoute"
+              />
+            </div>
           </div>
         </div>
 
@@ -124,11 +126,12 @@ import { LocalStorage, Notify } from "quasar";
 import { serverSetup } from "../../pages/server";
 import axios from "axios";
 import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
 import EcoSelect from "../VAEconomySelect.vue";
 import yearSelect from "../VAYearSelect.vue";
 
-const { t } = useI18n();
+const { locale, t } = useI18n({ useScope: "global" });
 
 // 🧭 Routing
 const router = useRouter();
@@ -163,6 +166,23 @@ const showError = ref(false);
 const showInvalidYear = ref(false);
 
 const isInputApply = ref(false);
+
+const getLocalizedInputData = () => {
+  const localizeEconomy = (economy) =>
+    economy
+      ? {
+          ...economy,
+          name: translateEconomy(economy, locale.value),
+        }
+      : economy;
+
+  return {
+    ...inputData.value,
+    exporting: localizeEconomy(inputData.value.exporting),
+    importing: localizeEconomy(inputData.value.importing),
+    source: localizeEconomy(inputData.value.source),
+  };
+};
 
 const onChangeRoute = () => {
   if (selectType.value === "Exporting Sector") {
@@ -302,7 +322,7 @@ const checkApplyBtn = () => {
   }
 
   emit("isPass", true);
-  emit("updateInputData", inputData.value);
+  emit("updateInputData", getLocalizedInputData());
   emit("isShowGraph", false);
   isInputApply.value = true;
 };
@@ -359,6 +379,7 @@ const onClickApply = async () => {
     icon: "fa-solid fa-circle-check",
   });
 
+  emit("updateInputData", getLocalizedInputData());
   emit("isShowGraph", true);
 };
 
@@ -369,7 +390,11 @@ const loadEconomyList = async () => {
     const res = await axios.get(url);
     economyList.value = res.data.map((data) => ({
       id: data.id,
-      label: data.name,
+      label: translateEconomy(
+        data,
+        locale.value,
+        data.name === "Economy Groups" ? 1 : 0,
+      ),
       value: data.iso,
       disable: data.disable,
     }));

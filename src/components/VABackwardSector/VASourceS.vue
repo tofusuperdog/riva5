@@ -85,23 +85,23 @@
         <div class="flex flex-row justify-center pb-2 px-2">
           <div class="flex justify-center items-center">
             <div class="w-3 h-3 bg-[#1F77B4]"></div>
-            <div class="pl-2">Asia-Pacific</div>
+            <div class="pl-2">{{ t("backward.charts.regionAsia") }}</div>
           </div>
           <div class="flex justify-center pl-2 items-center">
             <div class="w-3 h-3 bg-[#FF813D]"></div>
-            <div class="pl-2">Europe</div>
+            <div class="pl-2">{{ t("backward.charts.regionEurope") }}</div>
           </div>
           <div class="flex justify-center pl-2 items-center">
             <div class="w-3 h-3 bg-[#2CA02C]"></div>
-            <div class="pl-2">North America</div>
+            <div class="pl-2">{{ t("backward.charts.regionNorthAmerica") }}</div>
           </div>
           <div class="flex justify-center pl-2 items-center">
             <div class="w-3 h-3 bg-[#9467BD]"></div>
-            <div class="pl-2">Latin America</div>
+            <div class="pl-2">{{ t("backward.charts.regionLatinAmerica") }}</div>
           </div>
           <div class="flex justify-center pl-2 items-center">
             <div class="w-3 h-3 bg-[#E377C2]"></div>
-            <div class="pl-2">Rest of the World</div>
+            <div class="pl-2">{{ t("backward.charts.regionRestWorld") }}</div>
           </div>
         </div>
       </div>

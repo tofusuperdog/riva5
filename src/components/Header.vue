@@ -141,7 +141,29 @@ const navigate = (path) => {
 const goToHome = () => navigate("/");
 const goToAbout = () => navigate("/about");
 const goToHealthSector = () => navigate("/sectoral-analysis/health");
-const isActive = (path) => currentRoute.path === path;
+const isActive = (path) => {
+  const currentPath = currentRoute.path;
+  const isRouteBranch =
+    currentPath === path || currentPath.startsWith(`${path}/`);
+
+  if (path === "/backwardlinkages") {
+    return (
+      isRouteBranch ||
+      currentPath === "/backwardlinkagessource" ||
+      currentPath.startsWith("/backwardlinkagessource/")
+    );
+  }
+
+  if (path === "/forwardlinkages") {
+    return (
+      isRouteBranch ||
+      currentPath === "/forwardlinkagesimport" ||
+      currentPath.startsWith("/forwardlinkagesimport/")
+    );
+  }
+
+  return isRouteBranch;
+};
 
 const valueChainsMenu = [
   { name: "dashboard", labelKey: "nav.overview", icon: "/images/vaDashboardB.svg", path: "/va", action: () => navigate("/va") },
@@ -152,7 +174,9 @@ const valueChainsMenu = [
   { name: "briefs", labelKey: "nav.briefs", icon: "/images/vaCountryBriefB.svg", path: "/countrybriefs", action: () => navigate("/countrybriefs") },
 ];
 
-const isValueChainsRoute = valueChainsMenu.some((item) => isActive(item.path));
+const isValueChainsRoute = computed(() =>
+  valueChainsMenu.some((item) => isActive(item.path)),
+);
 </script>
 
 <style scoped>

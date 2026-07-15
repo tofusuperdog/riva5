@@ -4,7 +4,7 @@
   >
     <!-- หัวข้อ -->
     <div class="p-2 text-lg font-bold fblack">
-      {{ t('forward.topSectorsPeriods', { exporting: exporting.name, importing: importing.name }) }}
+      {{ t('forward.topSectorsPeriods', { exporting: exportingName, importing: importingName }) }}
     </div>
     <div class="border-b border-[#DDDDDD]"></div>
     <div
@@ -91,12 +91,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
 import { translateSector } from "../../i18n/sectors";
+import { translateEconomy } from "../../i18n/economies";
 const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
@@ -111,6 +112,8 @@ const yearList = ref([]);
 // ===== input from parent component =====
 const exporting = ref(props.inputData.exporting);
 const importing = ref(props.inputData.importing);
+const exportingName = computed(() => translateEconomy(exporting.value, locale.value));
+const importingName = computed(() => translateEconomy(importing.value, locale.value));
 const yearStart = Number(props.inputData.yearStart);
 const yearEnd = Number(props.inputData.yearEnd);
 const periodList = ref([]);
@@ -301,7 +304,7 @@ const loadData = async () => {
 };
 
 const plotGraph = () => {
-  let title = t('forward.topSectorPeriodsTitle', { exporting: exporting.value.name, importing: importing.value.name });
+  let title = t('forward.topSectorPeriodsTitle', { exporting: exportingName.value, importing: importingName.value });
   let series = seriesMain.value;
   let categoriesData = [periodList.value[0].label1, periodList.value[0].label2];
   Highcharts.chart("chartFISRange02", {
@@ -360,7 +363,7 @@ const desGen = (top5) => {
       sectorName: seriesMain.value[i].name,
       color: colorList[i],
       img: `/images/sector/${i + 1}/${top5[i]}.svg`,
-      des: t('forward.sectorPeriodDescription', { current: periodList.value[0].label2, sector: seriesMain.value[i].name, share: lasty, exporting: exporting.value.name, importing: importing.value.name, change: textdiff, previous: periodList.value[0].label1 }),
+      des: t('forward.sectorPeriodDescription', { current: periodList.value[0].label2, sector: seriesMain.value[i].name, share: lasty, exporting: exportingName.value, importing: importingName.value, change: textdiff, previous: periodList.value[0].label1 }),
     });
   }
 };

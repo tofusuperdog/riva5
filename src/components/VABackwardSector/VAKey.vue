@@ -22,7 +22,7 @@
 
     <div class="flex flex-col md:flex-row mt-2 px-4 md:items-center">
       <div
-        class="border-1 border-[#1A425A] p-2 bg-[#C9E2F4] rounded-md h-[60px] flex-1"
+        class="border-1 border-[#1A425A] p-2 bg-[#C9E2F4] rounded-md h-[60px] md:h-auto md:min-h-[60px] lg:h-[60px] flex-1"
       >
         <div class="text-[#005DAA] font-semibold text-center">
           {{ t("backward.sourceEconomy") }}
@@ -71,7 +71,7 @@
       </div>
 
       <div
-        class="border-1 border-[#1A425A] p-2 bg-[#C9E2F4] rounded-md h-[60px] flex-1"
+        class="border-1 border-[#1A425A] p-2 bg-[#C9E2F4] rounded-md h-[60px] md:h-auto md:min-h-[60px] lg:h-[60px] flex-1"
       >
         <div class="text-[#005DAA] font-semibold text-center">
           {{ t("backward.importingEconomy") }}

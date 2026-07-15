@@ -103,7 +103,7 @@
           ></div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="CLOSE" color="primary" v-close-popup />
+          <q-btn flat :label="t('backward.charts.close')" color="primary" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -116,6 +116,8 @@ import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
+import { translateEconomy } from "../../i18n/economies";
+import { translateSector } from "../../i18n/sectors";
 const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
@@ -191,7 +193,7 @@ const isoToName = (iso) => {
   let dataSelected = ecoList.value.find((item) => item.iso == iso);
   if (dataSelected) {
     return {
-      name: dataSelected.economic,
+      name: translateEconomy({ iso: dataSelected.iso, name: dataSelected.economic }, locale.value),
       iso: dataSelected.iso,
       area: dataSelected.area,
     };
@@ -341,6 +343,8 @@ const moneyShort = (n) => {
 };
 
 const genDes = () => {
+  const exportingName = translateEconomy(exporting.value, locale.value);
+  const sectorName = translateSector({ catID: sector.value.sectorID, category: sector.value.sectorShortName }, locale.value);
   for (let i = 0; i < 5; i++) {
     let lasty = seriesMain.value[i].data[yearEnd - yearStart].y;
     let firsty = seriesMain.value[i].data[0].y;
@@ -361,8 +365,8 @@ const genDes = () => {
 
     let des = `${t('forward.destinationYearDescription', {
       share: lasty,
-      exporting: exporting.value.name,
-      sector: sector.value.sectorShortName,
+      exporting: exportingName,
+      sector: sectorName,
       destination: regionCards.value[i].title,
       change: textdiff,
       start: yearStart,
@@ -439,7 +443,9 @@ const drawBreakdown = () => {
 const drawMainChart = () => {
   let categoriesData = categories.value.map(String);
   let series = seriesMain.value;
-  let title = t('forward.regionForwardTitle', { exporting: exporting.value.name, sector: sector.value.sectorShortName.toLowerCase() });
+  const exportingName = translateEconomy(exporting.value, locale.value);
+  const sectorName = translateSector({ catID: sector.value.sectorID, category: sector.value.sectorShortName }, locale.value);
+  let title = t('forward.regionForwardTitle', { exporting: exportingName, sector: sectorName.toLowerCase() });
 
   Highcharts.chart("chartBSRange01", {
     chart: { type: "spline", backgroundColor: "#fff" },

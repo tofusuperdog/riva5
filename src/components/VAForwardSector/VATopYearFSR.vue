@@ -94,7 +94,11 @@ import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
+import { translateEconomy } from "../../i18n/economies";
+import { translateSector } from "../../i18n/sectors";
 const { t, locale } = useI18n();
+const localizedExporting = () => translateEconomy(exporting.value, locale.value);
+const localizedSector = () => translateSector({ catID: sector.value.sectorID, category: sector.value.sectorShortName }, locale.value);
 
 // ===== Props / Server / Screen =====
 const props = defineProps({ inputData: Object });
@@ -134,7 +138,7 @@ const isoToName = (iso) => {
   let dataSelected = ecoList.value.find((item) => item.iso == iso);
   if (dataSelected) {
     return {
-      name: dataSelected.economic,
+      name: translateEconomy({ iso: dataSelected.iso, name: dataSelected.economic }, locale.value),
       iso: dataSelected.iso,
       area: dataSelected.area,
     };
@@ -235,7 +239,7 @@ const loadData = async () => {
 };
 
 const plotGraph = () => {
-  let title = t('forward.topDestinationTitle', { exporting: exporting.value.name, sector: sector.value.sectorShortName.toLowerCase() });
+  let title = t('forward.topDestinationTitle', { exporting: localizedExporting(), sector: localizedSector().toLowerCase() });
   let categoriesData = categories.value.map(String);
   let series = seriesMain.value;
 
@@ -303,7 +307,7 @@ const genDes = (top5) => {
       econname: seriesMain.value[i].name,
       color: colorList[i],
       img: `/images/flags/${top5[i]}.png`,
-      des: t('forward.destinationYearDescription', { share: lasty, exporting: exporting.value.name, sector: sector.value.sectorShortName.toLowerCase(), destination: seriesMain.value[i].name, change: textdiff, start: yearStart }),
+      des: t('forward.destinationYearDescription', { share: lasty, exporting: localizedExporting(), sector: localizedSector().toLowerCase(), destination: seriesMain.value[i].name, change: textdiff, start: yearStart }),
     });
   }
 };

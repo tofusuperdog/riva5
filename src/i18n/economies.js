@@ -61,3 +61,16 @@ export const translateEconomy = ({ iso, name }, locale = "en-US", headerIndex = 
     return name;
   }
 };
+
+/** Returns a translated economy-region/group label from the API's English label. */
+export const translateEconomyGroup = (name, locale = "en-US") => {
+  if (!name) return "";
+
+  const normalizedName = String(name).trim().toLowerCase();
+  const code = Object.entries(economyTranslations["en-US"]).find(
+    ([, label]) => typeof label === "string" && label.toLowerCase() === normalizedName,
+  )?.[0];
+
+  if (!code) return name;
+  return economyTranslations[locale]?.[code] || economyTranslations["en-US"]?.[code] || name;
+};

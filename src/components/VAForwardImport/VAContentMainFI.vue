@@ -19,33 +19,39 @@
         </div>
 
         <div
-          class="px-2 md:px-0 pb-2 text-white flex items-center md:w-[632px] md:mx-auto lg:w-[732px]"
+          class="px-2 pb-2 text-white flex flex-col items-start md:w-[632px] md:mx-auto md:px-0 lg:flex-row lg:items-center lg:w-[732px]"
         >
-          <div class="gt-xs">
+          <div class="gt-xs md:w-full lg:w-auto">
             <div class="font-semibold">{{ t('forward.viewBy') }}</div>
-            <div class="text-xs">{{ t('forward.chooseFocus') }}</div>
+            <div class="text-xs">
+              {{ t('forward.chooseFocus') }}
+            </div>
           </div>
-          <div class="w-2"></div>
-          <div>
-            <q-radio
-              v-model="selectType"
-              val="Exporting Sector"
-              :label="t('forward.exportingSector')"
-              color="warning"
-              dark
-              @update:model-value="onChangeRoute"
-            />
-          </div>
-          <div class="w-2"></div>
-          <div>
-            <q-radio
-              v-model="selectType"
-              val="Importing Economy"
-              :label="t('forward.importingEconomyFocus')"
-              color="warning"
-              dark
-              @update:model-value="onChangeRoute"
-            />
+          <div
+            class="flex flex-col items-start w-full mt-1 lg:flex-row lg:items-center lg:w-auto lg:mt-0"
+          >
+            <div class="w-0 lg:w-2"></div>
+            <div>
+              <q-radio
+                v-model="selectType"
+                val="Exporting Sector"
+                :label="t('forward.exportingSector')"
+                color="warning"
+                dark
+                @update:model-value="onChangeRoute"
+              />
+            </div>
+            <div class="w-0 lg:w-2"></div>
+            <div>
+              <q-radio
+                v-model="selectType"
+                val="Importing Economy"
+                :label="t('forward.importingEconomyFocus')"
+                color="warning"
+                dark
+                @update:model-value="onChangeRoute"
+              />
+            </div>
           </div>
         </div>
 
@@ -120,8 +126,9 @@ import { LocalStorage, Notify } from "quasar";
 import { serverSetup } from "../../pages/server";
 import axios from "axios";
 import { useI18n } from "vue-i18n";
+import { translateEconomy } from "../../i18n/economies";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 import EcoSelect from "../VAEconomySelect.vue";
 import yearSelect from "../VAYearSelect.vue";
@@ -313,8 +320,8 @@ const onClickApply = async () => {
     alert(
       `${t('forward.limitedData')}\n\n` +
         `${t('backward.availability', {
-          exporting: inputData.value.exporting.name,
-          importing: inputData.value.importing.name,
+          exporting: translateEconomy(inputData.value.exporting, locale.value),
+          importing: translateEconomy(inputData.value.importing, locale.value),
           start: yearRangeShow[0],
           end: yearRangeShow[1],
         })}\n` +
@@ -330,6 +337,8 @@ const onClickApply = async () => {
     icon: "fa-solid fa-circle-check",
   });
 
+  emit("updateInputData", inputData.value);
+  emit("isPass", true);
   emit("isShowGraph", true);
 };
 

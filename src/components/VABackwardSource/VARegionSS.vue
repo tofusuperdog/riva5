@@ -74,7 +74,8 @@ import { useQuasar } from "quasar";
 import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from "vue-i18n";
-import { translateSector } from "../../i18n/sectors";
+import { translateSector, translateSectorGroup } from "../../i18n/sectors";
+import { translateEconomy, translateEconomyGroup } from "../../i18n/economies";
 
 const { t, locale } = useI18n();
 
@@ -162,7 +163,10 @@ const sectorList = ref([]);
 const countriesISO = ref([]);
 const countriesName = ref([]);
 const economyList = ref([]);
-const regionName = ref("");
+const rawRegionName = ref("");
+const regionName = computed(() =>
+  translateEconomyGroup(rawRegionName.value, locale.value)
+);
 const gTotal = ref([]);
 const seriesMain = ref([]);
 
@@ -245,14 +249,17 @@ const loadData = async () => {
   const rawData = (res.data || []).filter((d) => Number(d.exp_sector) != 0);
 
   const expEco = isoToData(exporting.value.iso);
-  regionName.value = expEco?.region || "";
+  rawRegionName.value = expEco?.region || "";
 
   countriesISO.value = [...new Set(rawData.map((d) => d.exp_country))];
 
   // map country name safely
   countriesName.value = countriesISO.value.map((iso) => {
     const eco = isoToData(iso);
-    return eco?.economic || iso;
+    return translateEconomy(
+      { iso, name: eco?.economic || iso },
+      locale.value,
+    );
   });
 
   // 2) รวม gross export
@@ -316,7 +323,7 @@ const loadData = async () => {
     });
 
     seriesMain.value.push({
-      name: group,
+      name: translateSectorGroup(group, locale.value),
       color: colorObj?.color || "#999999",
       data: dataTemp,
     });
@@ -329,8 +336,14 @@ const loadData = async () => {
 
 // ---------- Graph (ไม่มี drilldown แล้ว) ----------
 const drawChart = () => {
-  const title = t("backward.charts.sourceRegionTitle", { source: source.value.name, region: regionName.value, importing: importing.value.name });
-  const yTitle = t("backward.charts.percentGrossTo", { economy: importing.value.name });
+  const sourceName = translateEconomy(source.value, locale.value);
+  const importingName = translateEconomy(importing.value, locale.value);
+  const title = t("backward.charts.sourceRegionTitle", {
+    source: sourceName,
+    region: regionName.value,
+    importing: importingName,
+  });
+  const yTitle = t("backward.charts.percentGrossTo", { economy: importingName });
 
   if (chartInstance) {
     chartInstance.destroy();

@@ -66,7 +66,7 @@
             :key="c.id"
           >
             <div class="w-3 h-3" :style="{ backgroundColor: c.color }"></div>
-            <div class="pl-2">{{ c.name }}</div>
+            <div class="pl-2">{{ translateSectorGroup(c.id, locale) }}</div>
           </div>
         </div>
       </div>
@@ -81,6 +81,7 @@ import axios from "axios";
 import { serverSetup } from "../../pages/server";
 import { useI18n } from 'vue-i18n';
 import { translateSector, translateSectorGroup } from "../../i18n/sectors";
+import { translateEconomy } from "../../i18n/economies";
 const { t, locale } = useI18n();
 
 // ===== Props / Server / Screen =====
@@ -91,6 +92,8 @@ const $q = useQuasar();
 // ===== input from parent component =====
 const exporting = ref(props.inputData.exporting);
 const importing = ref(props.inputData.importing);
+const exportingName = computed(() => translateEconomy(exporting.value, locale.value));
+const importingName = computed(() => translateEconomy(importing.value, locale.value));
 const year = computed(() => Number(props.inputData?.year) || null);
 const isLoading = ref(true);
 
@@ -233,10 +236,10 @@ const loadData = async () => {
 };
 
 const plotGraph = (gData, totalF, gTotal, top5) => {
-  let title = t('forward.sectorContributionTitle', { exporting: exporting.value.name, importing: importing.value.name });
+  let title = t('forward.sectorContributionTitle', { exporting: exportingName.value, importing: importingName.value });
   let subtitle = t('forward.sectorSubtitle', {
-    exporting: exporting.value.name,
-    importing: importing.value.name,
+    exporting: exportingName.value,
+    importing: importingName.value,
     gross: moneyShort(gTotal),
     year: year.value,
     forward: moneyShort(totalF),

@@ -32,33 +32,35 @@
         </div>
 
         <div
-          class="px-2 md:px-0 pb-2 text-white flex items-center md:w-[632px] md:mx-auto lg:w-[732px]"
+          class="px-2 md:px-0 pb-2 text-white flex flex-col items-start lg:flex-row lg:items-center md:w-[632px] md:mx-auto lg:w-[732px]"
         >
           <div class="gt-xs">
             <div class="font-semibold">{{ t("backward.viewBy") }}</div>
             <div class="text-xs">{{ t("backward.chooseFocus") }}</div>
           </div>
-          <div class="w-5"></div>
-          <div>
-            <q-radio
-              v-model="selectType"
-              val="Exporting Sector"
-              :label="t('backward.exportingSector')"
-              color="warning"
-              dark
-              @update:model-value="onChangeRoute"
-            />
-          </div>
-          <div class="w-5"></div>
-          <div>
-            <q-radio
-              v-model="selectType"
-              val="Source Economy"
-              :label="t('backward.sourceEconomy')"
-              color="warning"
-              dark
-              @update:model-value="onChangeRoute"
-            />
+          <div class="hidden lg:block w-5"></div>
+          <div class="flex flex-col md:flex-row md:items-center md:mt-1 lg:mt-0">
+            <div>
+              <q-radio
+                v-model="selectType"
+                val="Exporting Sector"
+                :label="t('backward.exportingSector')"
+                color="warning"
+                dark
+                @update:model-value="onChangeRoute"
+              />
+            </div>
+            <div class="hidden md:block w-5"></div>
+            <div>
+              <q-radio
+                v-model="selectType"
+                val="Source Economy"
+                :label="t('backward.sourceEconomy')"
+                color="warning"
+                dark
+                @update:model-value="onChangeRoute"
+              />
+            </div>
           </div>
         </div>
 
@@ -177,6 +179,41 @@ const showError = ref(false);
 const showInvalidYear = ref(false);
 
 const isInputApply = ref(false);
+
+const getLocalizedInputData = () => {
+  const exporting = inputData.value.exporting;
+  const importing = inputData.value.importing;
+  const sector = inputData.value.sector;
+  const localizedSectorName = sector
+    ? translateSector(
+        { catID: sector.sectorID, category: sector.sectorName },
+        locale.value,
+      )
+    : "";
+
+  return {
+    ...inputData.value,
+    exporting: exporting
+      ? {
+          ...exporting,
+          name: translateEconomy(exporting, locale.value),
+        }
+      : exporting,
+    importing: importing
+      ? {
+          ...importing,
+          name: translateEconomy(importing, locale.value),
+        }
+      : importing,
+    sector: sector
+      ? {
+          ...sector,
+          sectorName: localizedSectorName,
+          sectorShortName: localizedSectorName,
+        }
+      : sector,
+  };
+};
 
 const onChangeRoute = () => {
   if (selectType.value === "Source Economy") {
@@ -324,7 +361,7 @@ const checkApplyBtn = () => {
   }
 
   emit("isPass", true);
-  emit("updateInputData", inputData.value);
+  emit("updateInputData", getLocalizedInputData());
   emit("isShowGraph", false);
   isInputApply.value = true;
 };
@@ -374,6 +411,7 @@ const onClickApply = async () => {
     icon: "fa-solid fa-circle-check",
   });
 
+  emit("updateInputData", getLocalizedInputData());
   emit("isShowGraph", true);
 };
 
