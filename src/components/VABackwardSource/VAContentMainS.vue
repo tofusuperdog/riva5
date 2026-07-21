@@ -122,6 +122,7 @@
 <script setup>
 import { ref, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useAutoApplyRoute } from "../../composables/useAutoApplyRoute";
 import { LocalStorage, Notify } from "quasar";
 import { serverSetup } from "../../pages/server";
 import axios from "axios";
@@ -382,6 +383,24 @@ const onClickApply = async () => {
   emit("updateInputData", getLocalizedInputData());
   emit("isShowGraph", true);
 };
+
+useAutoApplyRoute({
+  route,
+  paramNames: ["exp", "imp", "source", "yearStart", "yearEnd"],
+  isReady: () =>
+    isInputApply.value &&
+    inputData.value.exporting?.id != null &&
+    inputData.value.importing?.id != null &&
+    inputData.value.source?.id != null,
+  getInputValues: () => [
+    inputData.value.exporting?.iso,
+    inputData.value.importing?.iso,
+    inputData.value.source?.iso,
+    inputData.value.yearStart,
+    inputData.value.yearEnd,
+  ],
+  onApply: onClickApply,
+});
 
 // 📌 Load Economy List
 const loadEconomyList = async () => {

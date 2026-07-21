@@ -169,15 +169,19 @@ function buildTwoPeriods(startYear, endYear) {
   endYear = Number(endYear);
 
   if (endYear <= startYear) {
-    return [{ label: String(startYear), y1: startYear, y2: startYear }];
+    const period = { label: String(startYear), y1: startYear, y2: startYear };
+    return [period, { ...period }];
   }
 
   const makeLbl = (a, b) => (a === b ? String(a) : `${a}-${b}`);
   const gap = endYear - startYear;
 
-  // ถ้าห่างกัน 1 ปี (เช่น 2015-2016) ก็มีช่วงเดียวพอ
+  // Two adjacent years are two individual periods for comparison.
   if (gap === 1) {
-    return [{ y1: startYear, y2: endYear, label: makeLbl(startYear, endYear) }];
+    return [
+      { y1: startYear, y2: startYear, label: String(startYear) },
+      { y1: endYear, y2: endYear, label: String(endYear) },
+    ];
   }
 
   // gap >= 2: แบ่งเป็น 2 ช่วงโดยให้ "ปีตรงกลาง" ซ้ำ (overlap)

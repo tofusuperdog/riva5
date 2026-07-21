@@ -292,7 +292,7 @@ watch(
         pageName.value == "Forward Linkages" &&
         props.ShareText.sector
       ) {
-        shareLink.value = `https://riva.negotiatetrade.org/#/forwardlinkages/${props.ShareText.exporting.iso}/${props.ShareText.sector.sectorID}/${props.ShareText.yearStart}/${props.ShareText.yearEnd}`;
+        shareLink.value = `https://riva.negotiatetrade.org/#/forwardlinkages/${props.ShareText.exporting.iso}/${props.ShareText.yearStart}/${props.ShareText.yearEnd}/${props.ShareText.sector.sectorID}`;
         isTinaOpen.value = false;
         isTinaLink.value = false;
       } else if (

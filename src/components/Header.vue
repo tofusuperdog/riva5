@@ -4,7 +4,12 @@
       <q-btn flat round dense icon="menu" class="header-menu-button lt-lg shrink-0" aria-label="Open menu" @click="menuOpen = true" />
 
       <div class="flex shrink-0 items-center">
-        <button class="flex items-center" aria-label="Go to home" @click="goToHome">
+        <button
+          type="button"
+          class="flex cursor-pointer items-center"
+          aria-label="Go to home"
+          @click="goToHome"
+        >
           <img src="/images/escap.svg" alt="ESCAP" class="h-8 sm:h-12 lg:h-13" />
           <span class="mx-1.5 h-6 border-l-2 border-white sm:mx-2 sm:h-9"></span>
           <img src="/images/rivaWhiteLogo2.svg" alt="RIVA" class="h-8 sm:h-12 lg:h-13" />

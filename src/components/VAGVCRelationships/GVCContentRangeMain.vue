@@ -99,6 +99,7 @@ const showInvalidYear = ref(false);
 const economyList = ref([]);
 
 const isInputApply = ref(false);
+const autoAppliedRouteKey = ref("");
 
 // 🧠 Update localStorage
 const updateLocalStorage = (key, value) => {
@@ -235,6 +236,39 @@ const onClickApply = async () => {
   });
   emit("isShowGraph", true);
 };
+
+// Apply automatically once all values from a complete shared URL are ready.
+watch(
+  [
+    () => route.params.exp,
+    () => route.params.yearStart,
+    () => route.params.yearEnd,
+    () => inputData.value.exporting,
+    () => inputData.value.yearStart,
+    () => inputData.value.yearEnd,
+  ],
+  async ([exp, yearStart, yearEnd, exporting, selectedStart, selectedEnd]) => {
+    if (!exp || !yearStart || !yearEnd || exporting?.id == null) return;
+
+    const routeKey = `${exp}/${yearStart}/${yearEnd}`;
+    const inputsMatchRoute =
+      exporting.iso === exp &&
+      String(selectedStart) === String(yearStart) &&
+      String(selectedEnd) === String(yearEnd);
+
+    if (
+      !inputsMatchRoute ||
+      Number(selectedStart) >= Number(selectedEnd) ||
+      autoAppliedRouteKey.value === routeKey
+    ) {
+      return;
+    }
+
+    autoAppliedRouteKey.value = routeKey;
+    await onClickApply();
+  },
+  { immediate: true },
+);
 
 // 🧭 Watch for route param
 // 🧠 Sync params.exp → exportingISOInit

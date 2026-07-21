@@ -118,6 +118,7 @@
 <script setup>
 import { ref, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useAutoApplyRoute } from "../../composables/useAutoApplyRoute";
 import { LocalStorage, Notify } from "quasar";
 import { serverSetup } from "../../pages/server";
 import axios from "axios";
@@ -147,7 +148,7 @@ const emit = defineEmits(["updateInputData", "isPass", "isShowGraph"]);
 // 📌 Input data state
 const inputData = ref({
   exporting: "",
-  importing: "",
+  importing: { id: 0, iso: "RoW", name: "World" },
   yearStart: "",
   yearEnd: "",
   sector: "",
@@ -356,6 +357,20 @@ const onClickApply = async () => {
   emit("isPass", true);
   emit("isShowGraph", true);
 };
+
+useAutoApplyRoute({
+  route,
+  paramNames: ["exp", "yearStart", "yearEnd", "sector"],
+  isReady: () =>
+    isInputApply.value && inputData.value.exporting?.id != null,
+  getInputValues: () => [
+    inputData.value.exporting?.iso,
+    inputData.value.yearStart,
+    inputData.value.yearEnd,
+    inputData.value.sector?.sectorID,
+  ],
+  onApply: onClickApply,
+});
 
 // 📌 Load Economy List
 const loadEconomyList = async () => {
