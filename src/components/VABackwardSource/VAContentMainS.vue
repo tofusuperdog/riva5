@@ -82,6 +82,7 @@
           </div>
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
+              :key="`period-start-${yearStartInit}`"
               :label="t('backward.periodStart')"
               @update="onUpdateYearStart"
               :initialValue="yearStartInit"
@@ -89,6 +90,7 @@
           </div>
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
+              :key="`period-end-${yearEndInit}`"
               :label="t('backward.periodEnd')"
               @update="onUpdateYearEnd"
               :initialValue="yearEndInit"
@@ -167,6 +169,17 @@ const showError = ref(false);
 const showInvalidYear = ref(false);
 
 const isInputApply = ref(false);
+const inferredEconomiesKey = ref("");
+const loadingEconomiesKey = ref("");
+
+const isEconomiesOnlyRoute = () =>
+  Boolean(
+    route.params.exp &&
+      route.params.imp &&
+      route.params.source &&
+      !route.params.yearStart &&
+      !route.params.yearEnd,
+  );
 
 const getLocalizedInputData = () => {
   const localizeEconomy = (economy) =>
@@ -384,6 +397,57 @@ const onClickApply = async () => {
   emit("isShowGraph", true);
 };
 
+watch(
+  [
+    () => route.params.exp,
+    () => route.params.imp,
+    () => route.params.source,
+    () => route.params.yearStart,
+    () => route.params.yearEnd,
+  ],
+  async ([exp, imp, source, yearStart, yearEnd]) => {
+    if (!exp || !imp || !source || yearStart || yearEnd) return;
+
+    const economiesKey = `${exp}/${imp}/${source}`;
+    if (
+      inferredEconomiesKey.value === economiesKey ||
+      loadingEconomiesKey.value === economiesKey
+    ) {
+      return;
+    }
+
+    loadingEconomiesKey.value = economiesKey;
+
+    try {
+      const url = serverData.value + "va/check_year_available.php";
+      const [exportingResult, importingResult, sourceResult] =
+        await Promise.all([
+          axios.post(url, JSON.stringify({ exp_country: exp })),
+          axios.post(url, JSON.stringify({ exp_country: imp })),
+          axios.post(url, JSON.stringify({ exp_country: source })),
+        ]);
+      const latestYear = Math.min(
+        Number(exportingResult.data?.[1]),
+        Number(importingResult.data?.[1]),
+        Number(sourceResult.data?.[1]),
+      );
+
+      if (!Number.isFinite(latestYear) || latestYear <= 2017) return;
+
+      inferredEconomiesKey.value = economiesKey;
+      yearStartInit.value = 2017;
+      yearEndInit.value = latestYear;
+      onUpdateYearStart(2017);
+      onUpdateYearEnd(latestYear);
+    } catch (error) {
+      console.error("Error loading available backward source period:", error);
+    } finally {
+      loadingEconomiesKey.value = "";
+    }
+  },
+  { immediate: true },
+);
+
 useAutoApplyRoute({
   route,
   paramNames: ["exp", "imp", "source", "yearStart", "yearEnd"],
@@ -398,6 +462,26 @@ useAutoApplyRoute({
     inputData.value.source?.iso,
     inputData.value.yearStart,
     inputData.value.yearEnd,
+  ],
+  onApply: onClickApply,
+});
+
+useAutoApplyRoute({
+  route,
+  paramNames: ["exp", "imp", "source"],
+  isReady: () =>
+    isEconomiesOnlyRoute() &&
+    inferredEconomiesKey.value ===
+      `${route.params.exp}/${route.params.imp}/${route.params.source}` &&
+    isInputApply.value &&
+    inputData.value.exporting?.id != null &&
+    inputData.value.importing?.id != null &&
+    inputData.value.source?.id != null &&
+    Number(inputData.value.yearStart) === 2017,
+  getInputValues: () => [
+    inputData.value.exporting?.iso,
+    inputData.value.importing?.iso,
+    inputData.value.source?.iso,
   ],
   onApply: onClickApply,
 });
@@ -532,7 +616,7 @@ watch(
     let yearToUse = year;
 
     // ถ้า param ไม่มี → ลองดึงจาก localStorage
-    if (!yearToUse) {
+    if (!yearToUse && !isEconomiesOnlyRoute()) {
       const stored = LocalStorage.getItem("inputVA");
       if (stored && stored.yearStart) {
         yearToUse = stored.yearStart;
@@ -557,7 +641,7 @@ watch(
     let yearToUse = year;
 
     // ถ้า param ไม่มี → ลองดึงจาก localStorage
-    if (!yearToUse) {
+    if (!yearToUse && !isEconomiesOnlyRoute()) {
       const stored = LocalStorage.getItem("inputVA");
       if (stored && stored.yearEnd) {
         yearToUse = stored.yearEnd;

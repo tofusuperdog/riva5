@@ -24,6 +24,7 @@
           </div>
           <div class="md:w-[150px]">
             <yearSelect
+              :key="`period-start-${yearStartInit}`"
               :label="t('gvc.periodStart')"
               @update="onUpdateYearStart"
               :initialValue="yearStartInit"
@@ -31,6 +32,7 @@
           </div>
           <div class="md:w-[150px]">
             <yearSelect
+              :key="`period-end-${yearEndInit}`"
               :label="t('gvc.periodEnd')"
               @update="onUpdateYearEnd"
               :initialValue="yearEndInit"
@@ -100,6 +102,15 @@ const economyList = ref([]);
 
 const isInputApply = ref(false);
 const autoAppliedRouteKey = ref("");
+const inferredPeriod = ref(null);
+const loadingPeriodForExp = ref("");
+
+const isEconomyOnlyRoute = () =>
+  Boolean(
+    route.params.exp &&
+      !route.params.yearStart &&
+      !route.params.yearEnd,
+  );
 
 // 🧠 Update localStorage
 const updateLocalStorage = (key, value) => {
@@ -237,7 +248,61 @@ const onClickApply = async () => {
   emit("isShowGraph", true);
 };
 
-// Apply automatically once all values from a complete shared URL are ready.
+// An economy-only URL uses the full period available for that economy.
+watch(
+  [
+    () => route.params.exp,
+    () => route.params.yearStart,
+    () => route.params.yearEnd,
+  ],
+  async ([exp, yearStart, yearEnd]) => {
+    if (
+      !exp ||
+      yearStart ||
+      yearEnd ||
+      inferredPeriod.value?.exp === exp ||
+      loadingPeriodForExp.value === exp
+    ) {
+      return;
+    }
+
+    loadingPeriodForExp.value = exp;
+
+    try {
+      const url = serverData.value + "va/check_year_available.php";
+      const { data } = await axios.post(
+        url,
+        JSON.stringify({ exp_country: exp }),
+      );
+      const defaultStart = 2017;
+      const availableEnd = Number(data?.[1]);
+
+      if (
+        !Number.isFinite(availableEnd) ||
+        defaultStart >= availableEnd
+      ) {
+        return;
+      }
+
+      inferredPeriod.value = {
+        exp,
+        yearStart: defaultStart,
+        yearEnd: availableEnd,
+      };
+      yearStartInit.value = defaultStart;
+      yearEndInit.value = availableEnd;
+      onUpdateYearStart(defaultStart);
+      onUpdateYearEnd(availableEnd);
+    } catch (error) {
+      console.error("Error loading available period:", error);
+    } finally {
+      loadingPeriodForExp.value = "";
+    }
+  },
+  { immediate: true },
+);
+
+// Apply automatically once all explicit or inferred URL values are ready.
 watch(
   [
     () => route.params.exp,
@@ -246,15 +311,26 @@ watch(
     () => inputData.value.exporting,
     () => inputData.value.yearStart,
     () => inputData.value.yearEnd,
+    () => inferredPeriod.value,
   ],
-  async ([exp, yearStart, yearEnd, exporting, selectedStart, selectedEnd]) => {
-    if (!exp || !yearStart || !yearEnd || exporting?.id == null) return;
+  async ([exp, yearStart, yearEnd, exporting, selectedStart, selectedEnd, inferred]) => {
+    const hasCompleteRoute = Boolean(exp && yearStart && yearEnd);
+    const hasInferredPeriod = Boolean(
+      exp && !yearStart && !yearEnd && inferred?.exp === exp,
+    );
 
-    const routeKey = `${exp}/${yearStart}/${yearEnd}`;
+    if ((!hasCompleteRoute && !hasInferredPeriod) || exporting?.id == null) {
+      return;
+    }
+
+    const expectedStart = hasCompleteRoute ? yearStart : inferred.yearStart;
+    const expectedEnd = hasCompleteRoute ? yearEnd : inferred.yearEnd;
+
+    const routeKey = `${hasCompleteRoute ? "explicit" : "inferred"}:${exp}/${expectedStart}/${expectedEnd}`;
     const inputsMatchRoute =
       exporting.iso === exp &&
-      String(selectedStart) === String(yearStart) &&
-      String(selectedEnd) === String(yearEnd);
+      String(selectedStart) === String(expectedStart) &&
+      String(selectedEnd) === String(expectedEnd);
 
     if (
       !inputsMatchRoute ||
@@ -312,7 +388,7 @@ watch(
     let yearToUse = year;
 
     // ถ้า param ไม่มี → ลองดึงจาก localStorage
-    if (!yearToUse) {
+    if (!yearToUse && !isEconomyOnlyRoute()) {
       const stored = LocalStorage.getItem("inputVA");
       if (stored && stored.yearStart) {
         yearToUse = stored.yearStart;
@@ -337,7 +413,7 @@ watch(
     let yearToUse = year;
 
     // ถ้า param ไม่มี → ลองดึงจาก localStorage
-    if (!yearToUse) {
+    if (!yearToUse && !isEconomyOnlyRoute()) {
       const stored = LocalStorage.getItem("inputVA");
       if (stored && stored.yearEnd) {
         yearToUse = stored.yearEnd;

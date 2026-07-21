@@ -88,6 +88,7 @@
         >
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
+              :key="`period-start-${yearStartInit}`"
               :label="t('backward.periodStart')"
               @update="onUpdateYearStart"
               :initialValue="yearStartInit"
@@ -95,6 +96,7 @@
           </div>
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
+              :key="`period-end-${yearEndInit}`"
               :label="t('backward.periodEnd')"
               @update="onUpdateYearEnd"
               :initialValue="yearEndInit"
@@ -180,6 +182,17 @@ const showError = ref(false);
 const showInvalidYear = ref(false);
 
 const isInputApply = ref(false);
+const inferredPairKey = ref("");
+const loadingPairKey = ref("");
+
+const isEconomyPairOnlyRoute = () =>
+  Boolean(
+    route.params.exp &&
+      route.params.imp &&
+      !route.params.yearStart &&
+      !route.params.yearEnd &&
+      !route.params.sector,
+  );
 
 const getLocalizedInputData = () => {
   const exporting = inputData.value.exporting;
@@ -416,6 +429,56 @@ const onClickApply = async () => {
   emit("isShowGraph", true);
 };
 
+watch(
+  [
+    () => route.params.exp,
+    () => route.params.imp,
+    () => route.params.yearStart,
+    () => route.params.yearEnd,
+    () => route.params.sector,
+  ],
+  async ([exp, imp, yearStart, yearEnd, sector]) => {
+    if (!exp || !imp || yearStart || yearEnd || sector) return;
+
+    const pairKey = `${exp}/${imp}`;
+    if (
+      inferredPairKey.value === pairKey ||
+      loadingPairKey.value === pairKey
+    ) {
+      return;
+    }
+
+    loadingPairKey.value = pairKey;
+
+    try {
+      const url = serverData.value + "va/check_year_available.php";
+      const [exportingResult, importingResult] = await Promise.all([
+        axios.post(url, JSON.stringify({ exp_country: exp })),
+        axios.post(url, JSON.stringify({ exp_country: imp })),
+      ]);
+      const latestYear = Math.min(
+        Number(exportingResult.data?.[1]),
+        Number(importingResult.data?.[1]),
+      );
+
+      if (!Number.isFinite(latestYear) || latestYear <= 2017) return;
+
+      inferredPairKey.value = pairKey;
+      yearStartInit.value = 2017;
+      yearEndInit.value = latestYear;
+      sectorInit.value = 0;
+      onUpdateYearStart(2017);
+      onUpdateYearEnd(latestYear);
+      onUpdateSector(0);
+    } catch (error) {
+      console.error("Error loading available backward period:", error);
+    } finally {
+      loadingPairKey.value = "";
+    }
+  },
+  { immediate: true },
+);
+
 useAutoApplyRoute({
   route,
   paramNames: ["exp", "imp", "yearStart", "yearEnd", "sector"],
@@ -429,6 +492,24 @@ useAutoApplyRoute({
     inputData.value.yearStart,
     inputData.value.yearEnd,
     inputData.value.sector?.sectorID,
+  ],
+  onApply: onClickApply,
+});
+
+useAutoApplyRoute({
+  route,
+  paramNames: ["exp", "imp"],
+  isReady: () =>
+    isEconomyPairOnlyRoute() &&
+    inferredPairKey.value === `${route.params.exp}/${route.params.imp}` &&
+    isInputApply.value &&
+    inputData.value.exporting?.id != null &&
+    inputData.value.importing?.id != null &&
+    Number(inputData.value.yearStart) === 2017 &&
+    Number(inputData.value.sector?.sectorID) === 0,
+  getInputValues: () => [
+    inputData.value.exporting?.iso,
+    inputData.value.importing?.iso,
   ],
   onApply: onClickApply,
 });
@@ -544,7 +625,7 @@ watch(
     let yearToUse = year;
 
     // ถ้า param ไม่มี → ลองดึงจาก localStorage
-    if (!yearToUse) {
+    if (!yearToUse && !isEconomyPairOnlyRoute()) {
       const stored = LocalStorage.getItem("inputVA");
       if (stored && stored.yearStart) {
         yearToUse = stored.yearStart;
@@ -569,7 +650,7 @@ watch(
     let yearToUse = year;
 
     // ถ้า param ไม่มี → ลองดึงจาก localStorage
-    if (!yearToUse) {
+    if (!yearToUse && !isEconomyPairOnlyRoute()) {
       const stored = LocalStorage.getItem("inputVA");
       if (stored && stored.yearEnd) {
         yearToUse = stored.yearEnd;
@@ -589,8 +670,16 @@ watch(
 watch(
   () => route.params.sector,
   (sector) => {
-    let sectorToUse = sector || LocalStorage.getItem("inputVA")?.sector;
-    if (sectorToUse) sectorInit.value = Number(sectorToUse);
+    const sectorToUse = isEconomyPairOnlyRoute()
+      ? 0
+      : sector || LocalStorage.getItem("inputVA")?.sector;
+    if (
+      sectorToUse !== undefined &&
+      sectorToUse !== null &&
+      sectorToUse !== ""
+    ) {
+      sectorInit.value = Number(sectorToUse);
+    }
   },
   { immediate: true }
 );

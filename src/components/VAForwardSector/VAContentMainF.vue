@@ -68,6 +68,7 @@
           </div>
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
+              :key="`period-start-${yearStartInit}`"
               :label="t('forward.periodStart')"
               @update="onUpdateYearStart"
               :initialValue="yearStartInit"
@@ -75,6 +76,7 @@
           </div>
           <div class="lg:w-[160px] md:w-[135px]">
             <yearSelect
+              :key="`period-end-${yearEndInit}`"
               :label="t('forward.periodEnd')"
               @update="onUpdateYearEnd"
               :initialValue="yearEndInit"
@@ -164,6 +166,16 @@ const showError = ref(false);
 const showInvalidYear = ref(false);
 
 const isInputApply = ref(false);
+const inferredEconomy = ref("");
+const loadingEconomy = ref("");
+
+const isEconomyOnlyRoute = () =>
+  Boolean(
+    route.params.exp &&
+      !route.params.yearStart &&
+      !route.params.yearEnd &&
+      !route.params.sector,
+  );
 
 const onChangeRoute = () => {
   if (selectType.value === "Importing Economy") {
@@ -358,6 +370,45 @@ const onClickApply = async () => {
   emit("isShowGraph", true);
 };
 
+watch(
+  [
+    () => route.params.exp,
+    () => route.params.yearStart,
+    () => route.params.yearEnd,
+    () => route.params.sector,
+  ],
+  async ([exp, yearStart, yearEnd, sector]) => {
+    if (!exp || yearStart || yearEnd || sector) return;
+    if (inferredEconomy.value === exp || loadingEconomy.value === exp) return;
+
+    loadingEconomy.value = exp;
+
+    try {
+      const url = serverData.value + "va/check_year_available.php";
+      const { data } = await axios.post(
+        url,
+        JSON.stringify({ exp_country: exp }),
+      );
+      const latestYear = Number(data?.[1]);
+
+      if (!Number.isFinite(latestYear) || latestYear <= 2017) return;
+
+      inferredEconomy.value = exp;
+      yearStartInit.value = 2017;
+      yearEndInit.value = latestYear;
+      sectorInit.value = 0;
+      onUpdateYearStart(2017);
+      onUpdateYearEnd(latestYear);
+      onUpdateSector(0);
+    } catch (error) {
+      console.error("Error loading available forward sector period:", error);
+    } finally {
+      loadingEconomy.value = "";
+    }
+  },
+  { immediate: true },
+);
+
 useAutoApplyRoute({
   route,
   paramNames: ["exp", "yearStart", "yearEnd", "sector"],
@@ -369,6 +420,20 @@ useAutoApplyRoute({
     inputData.value.yearEnd,
     inputData.value.sector?.sectorID,
   ],
+  onApply: onClickApply,
+});
+
+useAutoApplyRoute({
+  route,
+  paramNames: ["exp"],
+  isReady: () =>
+    isEconomyOnlyRoute() &&
+    inferredEconomy.value === route.params.exp &&
+    isInputApply.value &&
+    inputData.value.exporting?.id != null &&
+    Number(inputData.value.yearStart) === 2017 &&
+    Number(inputData.value.sector?.sectorID) === 0,
+  getInputValues: () => [inputData.value.exporting?.iso],
   onApply: onClickApply,
 });
 
@@ -483,7 +548,7 @@ watch(
     let yearToUse = year;
 
     // ถ้า param ไม่มี → ลองดึงจาก localStorage
-    if (!yearToUse) {
+    if (!yearToUse && !isEconomyOnlyRoute()) {
       const stored = LocalStorage.getItem("inputVA");
       if (stored && stored.yearStart) {
         yearToUse = stored.yearStart;
@@ -508,7 +573,7 @@ watch(
     let yearToUse = year;
 
     // ถ้า param ไม่มี → ลองดึงจาก localStorage
-    if (!yearToUse) {
+    if (!yearToUse && !isEconomyOnlyRoute()) {
       const stored = LocalStorage.getItem("inputVA");
       if (stored && stored.yearEnd) {
         yearToUse = stored.yearEnd;
@@ -528,8 +593,16 @@ watch(
 watch(
   () => route.params.sector,
   (sector) => {
-    let sectorToUse = sector || LocalStorage.getItem("inputVA")?.sector;
-    if (sectorToUse) sectorInit.value = Number(sectorToUse);
+    const sectorToUse = isEconomyOnlyRoute()
+      ? 0
+      : sector || LocalStorage.getItem("inputVA")?.sector;
+    if (
+      sectorToUse !== undefined &&
+      sectorToUse !== null &&
+      sectorToUse !== ""
+    ) {
+      sectorInit.value = Number(sectorToUse);
+    }
   },
   { immediate: true }
 );
